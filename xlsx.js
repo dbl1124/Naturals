@@ -110,6 +110,17 @@
     return out;
   }
 
+  function dataUrlToBytes(dataUrl) {
+    const b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+    if (typeof atob === "function") {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+    return new Uint8Array(Buffer.from(b64, "base64")); // Node (tests)
+  }
+
   /* ---------------- XML helpers ------------------------------ */
   function esc(v) {
     return String(v == null ? "" : v)
@@ -146,16 +157,24 @@
     return '<c r="' + ref + '" s="' + styleId + '"><v>' + n + "</v></c>";
   }
 
-  /* ---------------- Static workbook parts -------------------- */
-  const CONTENT_TYPES =
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-    '<Default Extension="xml" ContentType="application/xml"/>' +
-    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
-    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
-    "</Types>";
+  /* ---------------- Workbook parts ---------------------------- */
+  function contentTypesXml(hasImages) {
+    return (
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      (hasImages ? '<Default Extension="jpeg" ContentType="image/jpeg"/>' : "") +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      (hasImages
+        ? '<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+          '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'
+        : "") +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      "</Types>"
+    );
+  }
 
   const ROOT_RELS =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -163,18 +182,30 @@
     '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
     "</Relationships>";
 
-  const WORKBOOK =
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-    '<sheets><sheet name="Shot List" sheetId="1" r:id="rId1"/></sheets>' +
-    "</workbook>";
+  function workbookXml(hasImages) {
+    return (
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      "<sheets>" +
+      '<sheet name="Shot List" sheetId="1" r:id="rId1"/>' +
+      (hasImages ? '<sheet name="Reference Images" sheetId="2" r:id="rId3"/>' : "") +
+      "</sheets>" +
+      "</workbook>"
+    );
+  }
 
-  const WORKBOOK_RELS =
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
-    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
-    "</Relationships>";
+  function workbookRelsXml(hasImages) {
+    return (
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      (hasImages
+        ? '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'
+        : "") +
+      "</Relationships>"
+    );
+  }
 
   /* Style ids used by the sheet builder:
      0 default | 1 title | 2 subtitle | 3 note | 4 section band
@@ -289,6 +320,13 @@
     const centeredCols = new Set([1, 9, 11]); // Shot #, Orientation, Priority
     let rowIdx = 6;
     (data.shots || []).forEach(function (shot, i) {
+      const imgCount = (shot.refImages || []).length;
+      const refText =
+        (shot.referenceLink || "") +
+        (imgCount
+          ? (shot.referenceLink ? "  —  " : "") +
+            imgCount + " image" + (imgCount > 1 ? "s" : "") + " attached (see “Reference Images” tab)"
+          : "");
       const values = [
         i + 1,
         shot.sku,
@@ -297,7 +335,7 @@
         shot.angle,
         shot.props,
         shot.features,
-        shot.referenceLink,
+        refText,
         shot.orientation,
         Array.isArray(shot.intendedUse) ? shot.intendedUse.join(", ") : shot.intendedUse,
         shot.priority,
@@ -357,16 +395,112 @@
     );
   }
 
+  /* ---------------- Reference Images sheet -------------------- */
+  const EMU_PER_PX = 9525;
+  const ROW_PX = 20; // default row height at 15pt
+  const IMG_MAX_W = 380; // display width in the sheet, px
+
+  // Lays out every uploaded reference image on its own worksheet:
+  // a bold label row per image, the picture anchored just below it.
+  function buildImagesParts(images) {
+    const sheetRows = [];
+    const anchors = [];
+
+    sheetRows.push('<row r="1" ht="32" customHeight="1">' + strCell("A1", 1, "REFERENCE IMAGES") + "</row>");
+    let rowIdx = 3;
+
+    images.forEach(function (img, i) {
+      const label = "Shot " + img.shotNo + (img.name ? " — " + img.name : "");
+      sheetRows.push('<row r="' + rowIdx + '">' + strCell("B" + rowIdx, 8, label) + "</row>");
+
+      const scale = Math.min(1, IMG_MAX_W / (img.w || IMG_MAX_W));
+      const dispW = Math.max(1, Math.round((img.w || IMG_MAX_W) * scale));
+      const dispH = Math.max(1, Math.round((img.h || IMG_MAX_W) * scale));
+
+      anchors.push(
+        "<xdr:oneCellAnchor>" +
+          "<xdr:from><xdr:col>1</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>" + rowIdx + "</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>" +
+          '<xdr:ext cx="' + dispW * EMU_PER_PX + '" cy="' + dispH * EMU_PER_PX + '"/>' +
+          "<xdr:pic>" +
+          '<xdr:nvPicPr><xdr:cNvPr id="' + (i + 2) + '" name="' + esc(label) + '"/><xdr:cNvPicPr/></xdr:nvPicPr>' +
+          '<xdr:blipFill><a:blip r:embed="rId' + (i + 1) + '"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>' +
+          '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + dispW * EMU_PER_PX + '" cy="' + dispH * EMU_PER_PX + '"/></a:xfrm>' +
+          '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>' +
+          "</xdr:pic>" +
+          "<xdr:clientData/>" +
+          "</xdr:oneCellAnchor>"
+      );
+
+      rowIdx += Math.ceil(dispH / ROW_PX) + 3; // room for the picture + a gap
+    });
+
+    const sheetXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheetFormatPr defaultRowHeight="15"/>' +
+      '<cols><col min="1" max="1" width="3" customWidth="1"/><col min="2" max="2" width="60" customWidth="1"/></cols>' +
+      "<sheetData>" + sheetRows.join("") + "</sheetData>" +
+      '<mergeCells count="1"><mergeCell ref="A1:F1"/></mergeCells>' +
+      '<drawing r:id="rId1"/>' +
+      "</worksheet>";
+
+    const drawingXml =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      anchors.join("") +
+      "</xdr:wsDr>";
+
+    let drawingRels =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+    images.forEach(function (_, i) {
+      drawingRels +=
+        '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image' + (i + 1) + '.jpeg"/>';
+    });
+    drawingRels += "</Relationships>";
+
+    const sheetRels =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>' +
+      "</Relationships>";
+
+    return { sheetXml: sheetXml, drawingXml: drawingXml, drawingRels: drawingRels, sheetRels: sheetRels };
+  }
+
   /* ---------------- Public API -------------------------------- */
   function buildShotListXlsx(data) {
+    // Gather uploaded reference images across all shots
+    const images = [];
+    (data.shots || []).forEach(function (shot, i) {
+      (shot.refImages || []).forEach(function (img) {
+        images.push({ shotNo: i + 1, name: img.name, dataUrl: img.dataUrl, w: img.w, h: img.h });
+      });
+    });
+    const hasImages = images.length > 0;
+
     const entries = [
-      { name: "[Content_Types].xml", data: encodeUtf8(CONTENT_TYPES) },
+      { name: "[Content_Types].xml", data: encodeUtf8(contentTypesXml(hasImages)) },
       { name: "_rels/.rels", data: encodeUtf8(ROOT_RELS) },
-      { name: "xl/workbook.xml", data: encodeUtf8(WORKBOOK) },
-      { name: "xl/_rels/workbook.xml.rels", data: encodeUtf8(WORKBOOK_RELS) },
+      { name: "xl/workbook.xml", data: encodeUtf8(workbookXml(hasImages)) },
+      { name: "xl/_rels/workbook.xml.rels", data: encodeUtf8(workbookRelsXml(hasImages)) },
       { name: "xl/styles.xml", data: encodeUtf8(STYLES) },
       { name: "xl/worksheets/sheet1.xml", data: encodeUtf8(buildSheetXml(data)) },
     ];
+
+    if (hasImages) {
+      const parts = buildImagesParts(images);
+      entries.push(
+        { name: "xl/worksheets/sheet2.xml", data: encodeUtf8(parts.sheetXml) },
+        { name: "xl/worksheets/_rels/sheet2.xml.rels", data: encodeUtf8(parts.sheetRels) },
+        { name: "xl/drawings/drawing1.xml", data: encodeUtf8(parts.drawingXml) },
+        { name: "xl/drawings/_rels/drawing1.xml.rels", data: encodeUtf8(parts.drawingRels) }
+      );
+      images.forEach(function (img, i) {
+        entries.push({ name: "xl/media/image" + (i + 1) + ".jpeg", data: dataUrlToBytes(img.dataUrl) });
+      });
+    }
+
     return buildZip(entries);
   }
 

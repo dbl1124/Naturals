@@ -7,7 +7,8 @@ the site:
 
 1. **Generates a real Excel file** (`.xlsx`) laid out like the original
    workbook (title bar, project line, section bands, one row per shot), and
-   downloads it.
+   downloads it. Uploaded reference images are **embedded inside the file**
+   on a "Reference Images" tab.
 2. **Opens a pre-addressed email draft** to the photographer with the project
    summary filled in. The requestor attaches the downloaded file and hits send.
 
@@ -18,13 +19,16 @@ everything, including writing the Excel file in the browser.
 
 - **Project details** are just three fields: project name, your email, and
   general notes.
-- **One card per shot.** Shot types are grouped into **Studio**
-  (on-white, in case, macro, 360 spin, packaging), **Lifestyle & In-Use**,
-  **Group & Scale**, and **Retail** (POG/MOD).
-- Clicking **"Next shot"** collapses the finished shot into a thin
-  at-a-glance summary bar and opens a fresh card — so a 20-shot list stays
-  scannable instead of becoming one huge scroll. Click any summary bar to
-  expand and edit that shot again.
+- **One card per shot**, kept short: **Shot type and Angle/view sit
+  side-by-side** in two color-tinted columns (types grouped into Studio,
+  Lifestyle & In-Use, Group & Scale, Retail), orientation / intended use /
+  priority right below, and the free-text notes last in a two-column grid.
+- **Reference images**: each shot can carry up to 4 uploaded images (auto
+  downscaled in the browser); they're embedded in the generated Excel file.
+- Clicking **"Next shot"** (or the **Collapse** button in the card header)
+  folds the shot into a thin at-a-glance summary bar — so a 20-shot list
+  stays scannable instead of becoming one huge scroll. Click any summary
+  bar to expand and edit that shot again.
 
 ## Files
 
@@ -72,8 +76,8 @@ upload the five files, done.
   auto-send with the file attached, wire `app.js` up to a form-email service
   (e.g. EmailJS / Formspree / a small backend) — the data object handed to
   `buildShotListXlsx()` is the single thing you'd post.
-- **Drafts autosave** to the requestor's browser (`localStorage`), so a
-  half-finished list survives closing the tab. "Clear form" wipes it. When a
-  saved draft is restored, all shots but the last come back collapsed.
+- **The form always opens blank** — nothing is saved between visits, so
+  every requestor starts from a clean slate. (If you ever want draft
+  autosave back, it existed in an earlier version of `app.js`.)
 - **Wrike**: as in the original workbook, production status/approvals stay in
   Wrike — this form only creates the request.

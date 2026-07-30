@@ -29,7 +29,7 @@
     <p class="intro-strip">
       Fill in one card per final image, hit <strong>Next shot</strong> to move on, then
       <strong>Generate &amp; Send</strong> — the shot list downloads as an Excel file to attach
-      to the email draft that opens. Work autosaves in this browser.
+      to the email draft that opens.
     </p>
 
     <form id="shotlist-form" novalidate>
@@ -79,6 +79,7 @@
           <h3 class="shot-number">Shot 1</h3>
           <div class="shot-card__tools">
             <button type="button" class="btn btn--tiny shot-duplicate" title="Copy this shot as a starting point for another">Duplicate</button>
+            <button type="button" class="btn btn--tiny shot-collapse" title="Fold this shot into a one-line summary">Collapse ↥</button>
             <button type="button" class="btn btn--tiny btn--danger shot-remove" title="Remove this shot">Remove</button>
           </div>
         </header>
@@ -94,36 +95,16 @@
           </label>
         </div>
 
-        <fieldset class="picker">
-          <legend>Shot type <em>*</em></legend>
-          <div class="mount-shot-type"></div>
-        </fieldset>
+        <div class="split">
+          <fieldset class="picker split__col split__col--type">
+            <legend>Shot type <em>*</em></legend>
+            <div class="mount-shot-type"></div>
+          </fieldset>
 
-        <fieldset class="picker">
-          <legend>Angle / view</legend>
-          <div class="mount-angle"></div>
-        </fieldset>
-
-        <div class="picker">
-          <p class="picker__title">Shot notes</p>
-          <div class="field-grid field-grid--tight">
-            <label class="field">
-              <span class="field__label">Props / styling notes</span>
-              <textarea class="f-props" rows="2" placeholder="Arrangement, props, setup, styling direction"></textarea>
-            </label>
-            <label class="field">
-              <span class="field__label">Key features to highlight</span>
-              <textarea class="f-features" rows="2" placeholder="Details that must be visible or emphasized"></textarea>
-            </label>
-            <label class="field">
-              <span class="field__label">Reference / example link</span>
-              <input type="url" class="f-reference" placeholder="https:// link to an inspiration image" />
-            </label>
-            <label class="field">
-              <span class="field__label">Retouching / post notes</span>
-              <textarea class="f-retouching" rows="2" placeholder="Cleanup, compositing, color, masking…"></textarea>
-            </label>
-          </div>
+          <fieldset class="picker split__col split__col--angle">
+            <legend>Angle / view</legend>
+            <div class="mount-angle"></div>
+          </fieldset>
         </div>
 
         <div class="picker-row">
@@ -143,6 +124,34 @@
           </fieldset>
         </div>
 
+        <div class="picker">
+          <p class="picker__title">Shot notes</p>
+          <div class="field-grid field-grid--two">
+            <label class="field">
+              <span class="field__label">Props / styling notes</span>
+              <textarea class="f-props" rows="2" placeholder="Arrangement, props, setup, styling direction"></textarea>
+            </label>
+            <label class="field">
+              <span class="field__label">Key features to highlight</span>
+              <textarea class="f-features" rows="2" placeholder="Details that must be visible or emphasized"></textarea>
+            </label>
+            <div class="field">
+              <span class="field__label">Reference / example</span>
+              <input type="url" class="f-reference" placeholder="https:// link to an inspiration image" />
+              <div class="ref-upload">
+                <button type="button" class="btn btn--tiny ref-add">＋ Add reference images</button>
+                <span class="ref-hint">up to 4 — embedded right in the Excel file</span>
+                <input type="file" class="f-ref-files" accept="image/*" multiple hidden />
+                <div class="ref-thumbs"></div>
+              </div>
+            </div>
+            <label class="field">
+              <span class="field__label">Retouching / post notes</span>
+              <textarea class="f-retouching" rows="2" placeholder="Cleanup, compositing, color, masking…"></textarea>
+            </label>
+          </div>
+        </div>
+
         <div class="shot-card__footer">
           <button type="button" class="btn btn--primary shot-next">Next shot ↓</button>
         </div>
@@ -156,7 +165,7 @@
       <h2>🎉 Shot list generated!</h2>
       <p>Two things just happened:</p>
       <ol>
-        <li><strong><span id="success-file-name">Shot_List.xlsx</span></strong> downloaded to your computer.</li>
+        <li><strong><span id="success-file-name">Shot_List.xlsx</span></strong> downloaded to your computer (reference images are embedded inside it).</li>
         <li>An email draft to the photographer opened in your mail app.</li>
       </ol>
       <p class="overlay__cta">Last step: <strong>attach the downloaded file to that email</strong> and hit send.</p>

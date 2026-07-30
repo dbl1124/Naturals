@@ -125,6 +125,8 @@ body {
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field--wide { grid-column: 1 / -1; }
 
+.field-grid--two { grid-template-columns: 1fr 1fr; }
+
 .field__label { font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); }
 .field__label em { color: var(--danger); font-style: normal; }
 
@@ -162,8 +164,9 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
    clear, bold header so sections read as separate blocks. */
 .picker {
   border: none;
-  margin: 26px 0 0;
+  margin: 22px 0 0;
   padding: 0;
+  min-inline-size: 0;
 }
 
 .picker legend,
@@ -173,7 +176,35 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   color: var(--ink);
   margin: 0 0 10px;
   padding: 0;
+  float: left;      /* lets a legend sit inside a boxed fieldset */
+  width: 100%;
 }
+
+/* Grid/flex boxes shrink to avoid floats, so everything after a
+   floated legend must clear it or it collapses to one column. */
+.picker > :not(legend):not(.picker__title) { clear: both; }
+
+/* -------- side-by-side Shot type / Angle columns -------- */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.split__col {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 14px 12px;
+}
+
+.split__col--type { background: #edf4fb; }   /* blue tint */
+.split__col--angle { background: #f4f1fa; }  /* violet tint */
+
+.split__col .tile { border-color: #fff; }
+.split__col .tile:hover { border-color: var(--brand-500); }
+.split__col .tile:has(.tile__input:checked) { border-color: var(--brand-600); }
 
 .picker legend em { color: var(--danger); font-style: normal; }
 
@@ -277,7 +308,43 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   gap: 8px 22px;
 }
 
-.picker-row .picker { margin-top: 26px; }
+.picker-row .picker { margin-top: 22px; }
+
+/* -------- reference image uploads -------- */
+.ref-upload { margin-top: 7px; }
+
+.ref-hint { margin-left: 8px; font-size: 0.72rem; color: var(--ink-soft); }
+
+.ref-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+
+.ref-thumb {
+  position: relative;
+  width: 72px;
+  height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  flex: none;
+}
+
+.ref-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.ref-thumb__del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(21, 41, 64, 0.75);
+  color: #fff;
+  font-size: 10px;
+  line-height: 17px;
+  cursor: pointer;
+}
+.ref-thumb__del:hover { background: var(--danger); }
 
 /* ---------------- shot cards ---------------- */
 .shot-card { border-top: 4px solid var(--brand-500); }
@@ -470,6 +537,11 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 .overlay__panel .btn { width: 100%; margin-top: 6px; }
 
 /* ---------------- small screens ---------------- */
+@media (max-width: 860px) {
+  .split { grid-template-columns: 1fr; }
+  .field-grid--two { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 560px) {
   .card { padding: 16px 14px; }
   .topbar__inner { padding: 10px 14px; }
