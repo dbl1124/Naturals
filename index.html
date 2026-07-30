@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photography Shot List</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="topbar__brand">
+        <svg class="topbar__icon" viewBox="0 0 64 48" aria-hidden="true">
+          <rect x="6" y="12" width="52" height="32" rx="5"/>
+          <path d="M22 12l4-6h12l4 6"/>
+          <circle cx="32" cy="28" r="9"/>
+        </svg>
+        <div>
+          <h1 id="site-title">Photography Shot List</h1>
+          <p class="topbar__sub"><span id="company-name">ATG</span> · photo request form</p>
+        </div>
+      </div>
+      <span class="shot-count-badge" id="shot-count">1 shot</span>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="intro card">
+      <h2>How it works</h2>
+      <ol class="intro__steps">
+        <li><strong>Fill in the project details</strong> and one card per final image you need.</li>
+        <li><strong>Click “Generate &amp; Send”</strong> — the finished shot list downloads as an Excel file.</li>
+        <li><strong>Attach that file</strong> to the pre-addressed email draft that opens, and hit send.</li>
+      </ol>
+      <p class="intro__note">Your work autosaves in this browser, so you can leave and come back to a draft.</p>
+    </section>
+
+    <form id="shotlist-form" novalidate>
+      <section class="card">
+        <h2>Project details</h2>
+        <div class="field-grid">
+          <label class="field">
+            <span class="field__label">Project name <em>*</em></span>
+            <input type="text" id="project-name" placeholder="e.g. Spring 2026 Catalog" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Requested shoot date</span>
+            <input type="date" id="shoot-date" />
+          </label>
+          <label class="field">
+            <span class="field__label">Requested by <em>*</em></span>
+            <input type="text" id="requested-by" placeholder="Your name" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Your email</span>
+            <input type="email" id="requester-email" placeholder="you@company.com" />
+          </label>
+          <label class="field">
+            <span class="field__label">Photographer email <em>*</em></span>
+            <input type="email" id="photographer-email" required />
+          </label>
+          <label class="field field--wide">
+            <span class="field__label">General notes for the whole shoot</span>
+            <textarea id="general-notes" rows="2" placeholder="Anything that applies to every shot — deadlines, brand look, file specs…"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <div id="shots"></div>
+
+      <button type="button" id="add-shot" class="btn btn--ghost btn--add">＋ Add another shot</button>
+
+      <div id="error-box" class="error-box" hidden></div>
+
+      <div class="actionbar">
+        <button type="button" id="clear-form" class="btn btn--ghost">Clear form</button>
+        <button type="submit" class="btn btn--primary">Generate &amp; Send to Photographer</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- Template for one shot card -->
+  <template id="shot-template">
+    <section class="card shot-card">
+      <header class="shot-card__head">
+        <h3 class="shot-number">Shot 1</h3>
+        <div class="shot-card__tools">
+          <button type="button" class="btn btn--tiny shot-duplicate" title="Copy this shot as a starting point for another">Duplicate</button>
+          <button type="button" class="btn btn--tiny btn--danger shot-remove" title="Remove this shot">Remove</button>
+        </div>
+      </header>
+
+      <div class="field-grid">
+        <label class="field">
+          <span class="field__label">SKU number</span>
+          <input type="text" class="f-sku" placeholder="Exact product SKU / item number" />
+        </label>
+        <label class="field">
+          <span class="field__label">Product description</span>
+          <input type="text" class="f-description" placeholder="Official product name or clear description" />
+        </label>
+      </div>
+
+      <fieldset class="picker">
+        <legend>Shot type <em>*</em></legend>
+        <div class="mount-shot-type"></div>
+      </fieldset>
+
+      <fieldset class="picker">
+        <legend>Angle / view</legend>
+        <div class="mount-angle"></div>
+      </fieldset>
+
+      <div class="field-grid">
+        <label class="field">
+          <span class="field__label">Props / styling notes</span>
+          <textarea class="f-props" rows="2" placeholder="Arrangement, props, setup, styling direction"></textarea>
+        </label>
+        <label class="field">
+          <span class="field__label">Key features to highlight</span>
+          <textarea class="f-features" rows="2" placeholder="Details that must be visible or emphasized"></textarea>
+        </label>
+        <label class="field">
+          <span class="field__label">Reference / example link</span>
+          <input type="url" class="f-reference" placeholder="https:// link to an inspiration or example image" />
+        </label>
+        <label class="field field--narrow">
+          <span class="field__label"># of variations</span>
+          <input type="number" class="f-variations" min="1" max="99" placeholder="1" />
+        </label>
+      </div>
+
+      <div class="picker-row">
+        <fieldset class="picker picker--compact">
+          <legend>Orientation</legend>
+          <div class="mount-orientation"></div>
+        </fieldset>
+
+        <fieldset class="picker picker--compact">
+          <legend>Intended use <span class="picker__hint">(pick all that apply)</span></legend>
+          <div class="mount-intended-use"></div>
+        </fieldset>
+
+        <fieldset class="picker picker--compact">
+          <legend>Priority</legend>
+          <div class="mount-priority"></div>
+        </fieldset>
+      </div>
+
+      <label class="field">
+        <span class="field__label">Retouching / post-production notes</span>
+        <textarea class="f-retouching" rows="2" placeholder="Cleanup, compositing, color, masking, other post direction"></textarea>
+      </label>
+    </section>
+  </template>
+
+  <!-- Success overlay -->
+  <div id="success-overlay" class="overlay" hidden>
+    <div class="overlay__panel card">
+      <h2>🎉 Shot list generated!</h2>
+      <p>Two things just happened:</p>
+      <ol>
+        <li><strong><span id="success-file-name">Shot_List.xlsx</span></strong> downloaded to your computer.</li>
+        <li>An email draft to the photographer opened in your mail app.</li>
+      </ol>
+      <p class="overlay__cta">Last step: <strong>attach the downloaded file to that email</strong> and hit send.</p>
+      <p class="overlay__hint">No email draft? <a id="success-reopen-email" href="#">Click here to open it again</a>, or attach the file to a new email yourself.</p>
+      <button type="button" id="success-close" class="btn btn--primary">Done</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="xlsx.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
