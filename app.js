@@ -1,8 +1,8 @@
 /* ============================================================
    Shot List form — behavior
    Renders shot cards, visual pickers, reference image uploads,
-   and on submit: downloads a .xlsx (with reference images
-   embedded) + opens a pre-addressed email draft.
+   and on submit downloads a single .xlsx with every shot and
+   its reference images embedded.
    The form always starts blank — nothing is persisted.
    ============================================================ */
 
@@ -357,7 +357,6 @@
       companyName: cfg.companyName,
       project: $("#project-name").value.trim(),
       requesterEmail: $("#requester-email").value.trim(),
-      photographerEmail: cfg.photographerEmail,
       notes: $("#general-notes").value.trim(),
       shots: $$(".shot-card").map(readShot),
     };
@@ -374,7 +373,7 @@
       problems.push({ el: $("#project-name"), msg: "Project name is required." });
     }
     if (!data.requesterEmail) {
-      problems.push({ el: $("#requester-email"), msg: "Your email is required so the photographer can reply to you." });
+      problems.push({ el: $("#requester-email"), msg: "Your email is required so the photographer knows who to reply to." });
     }
 
     $$(".shot-card").forEach(function (card, i) {
@@ -441,44 +440,7 @@
       URL.revokeObjectURL(url);
     }, 30000);
 
-    const mailto = buildMailto(data, fileName);
-    $("#success-reopen-email").href = mailto;
     $("#success-file-name").textContent = fileName;
     $("#success-overlay").hidden = false;
-
-    // Give the download a beat to start before opening the mail client
-    setTimeout(function () {
-      window.location.href = mailto;
-    }, 600);
-  }
-
-  function buildMailto(data, fileName) {
-    const mustHaves = data.shots.filter(function (s) {
-      return s.priority === "Must-have";
-    }).length;
-
-    const lines = [
-      "Hi,",
-      "",
-      "New photography shot list for \"" + data.project + "\" — " +
-        data.shots.length + " shot" + (data.shots.length === 1 ? "" : "s") +
-        (mustHaves ? " (" + mustHaves + " must-have)" : "") + ".",
-      "Requested by: " + data.requesterEmail,
-      "",
-      "The full shot list is in the attached spreadsheet (" + fileName + ").",
-      "",
-      "Thanks!",
-    ];
-
-    // NOTE: the address must NOT be URL-encoded — encoding the "@" makes
-    // some mail clients treat the whole string as a garbled recipient.
-    return (
-      "mailto:" +
-      data.photographerEmail +
-      "?subject=" +
-      encodeURIComponent("Photography Shot List — " + data.project + " (" + data.shots.length + " shots)") +
-      "&body=" +
-      encodeURIComponent(lines.join("\r\n"))
-    );
   }
 })();

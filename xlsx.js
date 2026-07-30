@@ -280,7 +280,6 @@
     const info = [];
     info.push("Project: " + (data.project || "—"));
     if (data.requesterEmail) info.push("Requested by: " + data.requesterEmail);
-    if (data.photographerEmail) info.push("Photographer: " + data.photographerEmail);
     rows.push('<row r="2" ht="22" customHeight="1">' + strCell("A2", 2, info.join("   |   ")) + "</row>");
     merges.push("A2:" + lastCol + "2");
 

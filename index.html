@@ -28,8 +28,8 @@
   <main class="page">
     <p class="intro-strip">
       Fill in one card per final image, hit <strong>Next shot</strong> to move on, then
-      <strong>Generate &amp; Send</strong> — the shot list downloads as an Excel file to attach
-      to the email draft that opens.
+      <strong>Download Shot List</strong> — you'll get a single Excel file with every shot
+      and any reference images you attached.
     </p>
 
     <form id="shotlist-form" novalidate>
@@ -59,7 +59,7 @@
 
       <div class="actionbar">
         <button type="button" id="clear-form" class="btn btn--ghost">Clear form</button>
-        <button type="submit" class="btn btn--primary">Generate &amp; Send to Photographer</button>
+        <button type="submit" class="btn btn--primary">⬇ Download Shot List</button>
       </div>
     </form>
   </main>
@@ -96,35 +96,35 @@
         </div>
 
         <div class="split">
-          <fieldset class="picker split__col split__col--type">
+          <fieldset class="picker split__col sec-box sec-box--type">
             <legend>Shot type <em>*</em></legend>
             <div class="mount-shot-type"></div>
           </fieldset>
 
-          <fieldset class="picker split__col split__col--angle">
+          <fieldset class="picker split__col sec-box sec-box--angle">
             <legend>Angle / view</legend>
             <div class="mount-angle"></div>
           </fieldset>
         </div>
 
         <div class="picker-row">
-          <fieldset class="picker picker--compact">
+          <fieldset class="picker sec-box sec-box--orient">
             <legend>Orientation</legend>
             <div class="mount-orientation"></div>
           </fieldset>
 
-          <fieldset class="picker picker--compact">
+          <fieldset class="picker sec-box sec-box--use">
             <legend>Intended use <span class="picker__hint">(pick all that apply)</span></legend>
             <div class="mount-intended-use"></div>
           </fieldset>
 
-          <fieldset class="picker picker--compact">
+          <fieldset class="picker sec-box sec-box--priority">
             <legend>Priority</legend>
             <div class="mount-priority"></div>
           </fieldset>
         </div>
 
-        <div class="picker">
+        <div class="picker sec-box sec-box--notes">
           <p class="picker__title">Shot notes</p>
           <div class="field-grid field-grid--two">
             <label class="field">
@@ -162,14 +162,10 @@
   <!-- Success overlay -->
   <div id="success-overlay" class="overlay" hidden>
     <div class="overlay__panel card">
-      <h2>🎉 Shot list generated!</h2>
-      <p>Two things just happened:</p>
-      <ol>
-        <li><strong><span id="success-file-name">Shot_List.xlsx</span></strong> downloaded to your computer (reference images are embedded inside it).</li>
-        <li>An email draft to the photographer opened in your mail app.</li>
-      </ol>
-      <p class="overlay__cta">Last step: <strong>attach the downloaded file to that email</strong> and hit send.</p>
-      <p class="overlay__hint">Heads up: for security reasons, no website can attach a file to an email for you — the two-step download-then-attach is as automatic as email gets. No draft opened? <a id="success-reopen-email" href="#">Click here to open it again</a>.</p>
+      <h2>🎉 Shot list downloaded!</h2>
+      <p>Your file is in your Downloads folder:</p>
+      <p class="overlay__file"><span id="success-file-name">Shot_List.xlsx</span></p>
+      <p class="overlay__hint">Every shot is on the <strong>Shot List</strong> tab, and any reference images you attached are embedded on the <strong>Reference Images</strong> tab. Send it along to your photographer whenever you're ready.</p>
       <button type="button" id="success-close" class="btn btn--primary">Done</button>
     </div>
   </div>

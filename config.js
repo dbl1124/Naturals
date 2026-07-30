@@ -9,10 +9,6 @@ const SHOTLIST_CONFIG = {
   companyName: "ATG",
   siteTitle: "Photography Shot List",
 
-  // Default recipient for the finished shot list. The requestor
-  // can still change it on the form.
-  photographerEmail: "photographer@example.com",
-
   // Maximum shots per request (soft guard against runaway forms)
   maxShots: 50,
 

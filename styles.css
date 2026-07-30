@@ -1,20 +1,32 @@
 /* ============================================================
    Shot List form — styles
-   Clean, neutral layout with a blue accent.
+   One cool palette: every section tint is a low-saturation
+   sibling of the brand blue (azure → indigo → teal → violet →
+   steel), so the card reads as a single system.
    ============================================================ */
 
 :root {
+  /* brand */
   --brand-900: #152940;
   --brand-700: #1f4468;
   --brand-600: #2a5d8c;
   --brand-500: #3a76ad;
   --brand-100: #e1ecf6;
   --brand-50: #f1f6fb;
+
+  /* section palette — background / stroke / accent ink */
+  --sec-azure-bg: #e7f1fb;   --sec-azure-line: #bdd8f0;   --sec-azure-ink: #1d4a75;
+  --sec-indigo-bg: #e9ecfb;  --sec-indigo-line: #c5cdee;  --sec-indigo-ink: #2f3d80;
+  --sec-teal-bg: #e2f2f5;    --sec-teal-line: #b2d7de;    --sec-teal-ink: #14545f;
+  --sec-violet-bg: #eeebfb;  --sec-violet-line: #cdc6ed;  --sec-violet-ink: #483d8c;
+  --sec-steel-bg: #e8eef6;   --sec-steel-line: #c0cddd;   --sec-steel-ink: #2d4a72;
+  --sec-plain-bg: #f5f7fa;   --sec-plain-line: #dbe3ec;   --sec-plain-ink: #3d4a5a;
+
   --ink: #232830;
   --ink-soft: #5b6572;
   --line: #d6dee6;
   --danger: #b3432f;
-  --amber: #b07a1e;
+  --amber: #9c7016;
   --paper: #ffffff;
   --bg: #f4f7fa;
   --radius: 12px;
@@ -160,8 +172,6 @@ textarea.invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 3px
 div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); padding: 6px; }
 
 /* ---------------- shot sections & pickers ---------------- */
-/* Each section inside a shot card gets breathing room and a
-   clear, bold header so sections read as separate blocks. */
 .picker {
   border: none;
   margin: 22px 0 0;
@@ -184,6 +194,43 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
    floated legend must clear it or it collapses to one column. */
 .picker > :not(legend):not(.picker__title) { clear: both; }
 
+.picker legend em { color: var(--danger); font-style: normal; }
+
+.picker__hint { font-weight: 400; font-size: 0.8rem; color: var(--ink-soft); }
+
+/* -------- boxed sections: stroke + tinted background -------- */
+.sec-box {
+  border: 1px solid var(--sec-line, var(--line));
+  background: var(--sec-bg, #fff);
+  border-radius: 10px;
+  padding: 13px 14px 12px;
+  margin-top: 0;
+}
+
+.sec-box legend,
+.sec-box .picker__title { color: var(--sec-ink, var(--ink)); }
+
+.sec-box .tile { border-color: rgba(255, 255, 255, 0.9); }
+.sec-box .tile:hover { border-color: var(--sec-ink, var(--brand-500)); }
+.sec-box .tile__art { color: var(--sec-ink, var(--brand-600)); }
+
+.sec-box .tile:has(.tile__input:checked) {
+  border-color: var(--sec-ink, var(--brand-600));
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--sec-ink, var(--brand-600));
+}
+
+.sec-box .tile:has(.tile__input:checked)::after { background: var(--sec-ink, var(--brand-600)); }
+
+.sec-box .tile-group__label { color: var(--sec-ink, var(--brand-600)); opacity: 0.85; }
+
+.sec-box--type    { --sec-bg: var(--sec-azure-bg);  --sec-line: var(--sec-azure-line);  --sec-ink: var(--sec-azure-ink); }
+.sec-box--angle   { --sec-bg: var(--sec-indigo-bg); --sec-line: var(--sec-indigo-line); --sec-ink: var(--sec-indigo-ink); }
+.sec-box--orient  { --sec-bg: var(--sec-teal-bg);   --sec-line: var(--sec-teal-line);   --sec-ink: var(--sec-teal-ink); }
+.sec-box--use     { --sec-bg: var(--sec-violet-bg); --sec-line: var(--sec-violet-line); --sec-ink: var(--sec-violet-ink); }
+.sec-box--priority{ --sec-bg: var(--sec-steel-bg);  --sec-line: var(--sec-steel-line);  --sec-ink: var(--sec-steel-ink); }
+.sec-box--notes   { --sec-bg: var(--sec-plain-bg);  --sec-line: var(--sec-plain-line);  --sec-ink: var(--sec-plain-ink); }
+
 /* -------- side-by-side Shot type / Angle columns -------- */
 .split {
   display: grid;
@@ -192,23 +239,7 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   margin-top: 22px;
 }
 
-.split__col {
-  margin: 0;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px 14px 12px;
-}
-
-.split__col--type { background: #edf4fb; }   /* blue tint */
-.split__col--angle { background: #f4f1fa; }  /* violet tint */
-
-.split__col .tile { border-color: #fff; }
-.split__col .tile:hover { border-color: var(--brand-500); }
-.split__col .tile:has(.tile__input:checked) { border-color: var(--brand-600); }
-
-.picker legend em { color: var(--danger); font-style: normal; }
-
-.picker__hint { font-weight: 400; font-size: 0.8rem; color: var(--ink-soft); }
+.split__col { margin: 0; }
 
 /* shot type groups */
 .tile-groups { display: flex; flex-direction: column; gap: 12px; }
@@ -297,18 +328,17 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   outline-offset: 2px;
 }
 
-/* priority tones */
-.tile--high .tile__art { color: var(--danger); }
-.tile--mid .tile__art { color: var(--amber); }
-.tile--low .tile__art { color: var(--ink-soft); }
+/* priority keeps its semantic tones */
+.sec-box--priority .tile--high .tile__art { color: var(--danger); }
+.sec-box--priority .tile--mid .tile__art { color: var(--amber); }
+.sec-box--priority .tile--low .tile__art { color: var(--ink-soft); }
 
 .picker-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 8px 22px;
+  gap: 14px;
+  margin-top: 16px;
 }
-
-.picker-row .picker { margin-top: 22px; }
 
 /* -------- reference image uploads -------- */
 .ref-upload { margin-top: 7px; }
@@ -369,7 +399,7 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 .shot-card__footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 /* -------- collapsed shot: thin at-a-glance bar -------- */
@@ -522,14 +552,16 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   padding: 20px;
 }
 
-.overlay__panel { max-width: 480px; width: 100%; margin: 0; }
+.overlay__panel { max-width: 460px; width: 100%; margin: 0; }
 
 .overlay__panel h2 { text-transform: none; letter-spacing: 0; font-size: 1.2rem; }
 
-.overlay__cta {
+.overlay__file {
   background: var(--brand-100);
   border-radius: 8px;
   padding: 10px 14px;
+  font-weight: 600;
+  word-break: break-all;
 }
 
 .overlay__hint { font-size: 0.85rem; color: var(--ink-soft); }
