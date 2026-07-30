@@ -17,63 +17,84 @@ const SHOTLIST_CONFIG = {
   maxShots: 50,
 
   /* ----------------------------------------------------------
-     Shot Type options (from "Specs & Legend" in the workbook)
+     Shot Type options, grouped. Each group renders as a labeled
+     cluster of tiles inside the Shot Type section.
      ---------------------------------------------------------- */
-  shotTypes: [
+  shotTypeGroups: [
     {
-      value: "Product On-White",
-      hint: "Clean product on a plain white background",
-      svg: '<svg viewBox="0 0 64 48"><rect x="23" y="9" width="18" height="27" rx="2"/><line x1="14" y1="41" x2="50" y2="41"/></svg>',
+      label: "Studio",
+      options: [
+        {
+          value: "Product On-White",
+          hint: "Clean product on a plain white background",
+          svg: '<svg viewBox="0 0 64 48"><rect x="23" y="9" width="18" height="27" rx="2"/><line x1="14" y1="41" x2="50" y2="41"/></svg>',
+        },
+        {
+          value: "On-White in Case",
+          hint: "Product shown inside its case or tray, on white",
+          svg: '<svg viewBox="0 0 64 48"><rect x="13" y="7" width="38" height="34" rx="3"/><rect x="25" y="15" width="14" height="19" rx="1.5"/></svg>',
+        },
+        {
+          value: "Detail / Macro",
+          hint: "Extreme close-up of a specific feature or texture",
+          svg: '<svg viewBox="0 0 64 48"><circle cx="27" cy="19" r="11"/><line x1="35" y1="27" x2="48" y2="40"/><circle cx="27" cy="19" r="3.5" class="fill"/></svg>',
+        },
+        {
+          value: "360 Spin",
+          hint: "Full rotation set for interactive spin viewers",
+          svg: '<svg viewBox="0 0 64 48"><rect x="26" y="12" width="12" height="16" rx="2"/><path d="M14 34c0 5 8 8 18 8s18-3 18-8"/><path d="M50 34c0-5-8-8-18-8s-18 3-18 8"/><path d="M46 30l4 4-6 2"/></svg>',
+        },
+        {
+          value: "Packaging",
+          hint: "Boxed / packaged product, flaps or label visible",
+          svg: '<svg viewBox="0 0 64 48"><rect x="18" y="18" width="28" height="22" rx="1.5"/><path d="M18 18l-8-7M46 18l8-7M18 18h28"/><line x1="32" y1="18" x2="32" y2="40"/></svg>',
+        },
+      ],
     },
     {
-      value: "On-White in Case",
-      hint: "Product shown inside its case or tray, on white",
-      svg: '<svg viewBox="0 0 64 48"><rect x="13" y="7" width="38" height="34" rx="3"/><rect x="25" y="15" width="14" height="19" rx="1.5"/></svg>',
+      label: "Lifestyle & In-Use",
+      options: [
+        {
+          value: "In-Use / Environmental",
+          hint: "Product being used in a real setting",
+          svg: '<svg viewBox="0 0 64 48"><rect x="27" y="8" width="12" height="18" rx="2"/><path d="M20 34c0-5 4-8 8-8h8c4 0 8 3 8 8v7H20z"/></svg>',
+        },
+        {
+          value: "Lifestyle",
+          hint: "Scene-driven image with people / environment",
+          svg: '<svg viewBox="0 0 64 48"><rect x="9" y="7" width="46" height="34" rx="3"/><circle cx="22" cy="17" r="4"/><path d="M9 37l13-11 9 7 10-9 14 13"/></svg>',
+        },
+      ],
     },
     {
-      value: "Detail / Macro",
-      hint: "Extreme close-up of a specific feature or texture",
-      svg: '<svg viewBox="0 0 64 48"><circle cx="27" cy="19" r="11"/><line x1="35" y1="27" x2="48" y2="40"/><circle cx="27" cy="19" r="3.5" class="fill"/></svg>',
+      label: "Group & Scale",
+      options: [
+        {
+          value: "Group / Family",
+          hint: "Multiple products or full line shown together",
+          svg: '<svg viewBox="0 0 64 48"><rect x="10" y="18" width="12" height="22" rx="1.5"/><rect x="26" y="10" width="12" height="30" rx="1.5"/><rect x="42" y="22" width="12" height="18" rx="1.5"/></svg>',
+        },
+        {
+          value: "Scale / Comparison",
+          hint: "Product next to a reference object for size",
+          svg: '<svg viewBox="0 0 64 48"><rect x="14" y="14" width="16" height="26" rx="1.5"/><line x1="44" y1="8" x2="44" y2="40"/><line x1="40" y1="12" x2="48" y2="12"/><line x1="41" y1="19" x2="47" y2="19"/><line x1="40" y1="26" x2="48" y2="26"/><line x1="41" y1="33" x2="47" y2="33"/></svg>',
+        },
+      ],
     },
     {
-      value: "POG / MOD",
-      hint: "Planogram / merchandising view — product on shelf",
-      svg: '<svg viewBox="0 0 64 48"><line x1="10" y1="22" x2="54" y2="22"/><line x1="10" y1="40" x2="54" y2="40"/><rect x="14" y="10" width="9" height="12"/><rect x="27" y="10" width="9" height="12"/><rect x="18" y="28" width="9" height="12"/><rect x="34" y="28" width="12" height="12"/></svg>',
-    },
-    {
-      value: "In-Use / Environmental",
-      hint: "Product being used in a real setting",
-      svg: '<svg viewBox="0 0 64 48"><rect x="27" y="8" width="12" height="18" rx="2"/><path d="M20 34c0-5 4-8 8-8h8c4 0 8 3 8 8v7H20z"/></svg>',
-    },
-    {
-      value: "Lifestyle",
-      hint: "Scene-driven image with people / environment",
-      svg: '<svg viewBox="0 0 64 48"><rect x="9" y="7" width="46" height="34" rx="3"/><circle cx="22" cy="17" r="4"/><path d="M9 37l13-11 9 7 10-9 14 13"/></svg>',
-    },
-    {
-      value: "360 Spin",
-      hint: "Full rotation set for interactive spin viewers",
-      svg: '<svg viewBox="0 0 64 48"><rect x="26" y="12" width="12" height="16" rx="2"/><path d="M14 34c0 5 8 8 18 8s18-3 18-8"/><path d="M50 34c0-5-8-8-18-8s-18 3-18 8"/><path d="M46 30l4 4-6 2"/></svg>',
-    },
-    {
-      value: "Group / Family",
-      hint: "Multiple products or full line shown together",
-      svg: '<svg viewBox="0 0 64 48"><rect x="10" y="18" width="12" height="22" rx="1.5"/><rect x="26" y="10" width="12" height="30" rx="1.5"/><rect x="42" y="22" width="12" height="18" rx="1.5"/></svg>',
-    },
-    {
-      value: "Scale / Comparison",
-      hint: "Product next to a reference object for size",
-      svg: '<svg viewBox="0 0 64 48"><rect x="14" y="14" width="16" height="26" rx="1.5"/><line x1="44" y1="8" x2="44" y2="40"/><line x1="40" y1="12" x2="48" y2="12"/><line x1="41" y1="19" x2="47" y2="19"/><line x1="40" y1="26" x2="48" y2="26"/><line x1="41" y1="33" x2="47" y2="33"/></svg>',
-    },
-    {
-      value: "Packaging",
-      hint: "Boxed / packaged product, flaps or label visible",
-      svg: '<svg viewBox="0 0 64 48"><rect x="18" y="18" width="28" height="22" rx="1.5"/><path d="M18 18l-8-7M46 18l8-7M18 18h28"/><line x1="32" y1="18" x2="32" y2="40"/></svg>',
-    },
-    {
-      value: "Other",
-      hint: "Something else — describe it in the notes",
-      svg: '<svg viewBox="0 0 64 48"><rect x="12" y="9" width="40" height="30" rx="3" stroke-dasharray="5 4"/><circle cx="24" cy="24" r="1.6" class="fill"/><circle cx="32" cy="24" r="1.6" class="fill"/><circle cx="40" cy="24" r="1.6" class="fill"/></svg>',
+      label: "Retail",
+      options: [
+        {
+          value: "POG / MOD",
+          hint: "Planogram / merchandising view — product on shelf",
+          svg: '<svg viewBox="0 0 64 48"><line x1="10" y1="22" x2="54" y2="22"/><line x1="10" y1="40" x2="54" y2="40"/><rect x="14" y="10" width="9" height="12"/><rect x="27" y="10" width="9" height="12"/><rect x="18" y="28" width="9" height="12"/><rect x="34" y="28" width="12" height="12"/></svg>',
+        },
+        {
+          value: "Other",
+          hint: "Something else — describe it in the notes",
+          svg: '<svg viewBox="0 0 64 48"><rect x="12" y="9" width="40" height="30" rx="3" stroke-dasharray="5 4"/><circle cx="24" cy="24" r="1.6" class="fill"/><circle cx="32" cy="24" r="1.6" class="fill"/><circle cx="40" cy="24" r="1.6" class="fill"/></svg>',
+        },
+      ],
     },
   ],
 

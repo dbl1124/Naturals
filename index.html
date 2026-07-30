@@ -26,15 +26,11 @@
   </header>
 
   <main class="page">
-    <section class="intro card">
-      <h2>How it works</h2>
-      <ol class="intro__steps">
-        <li><strong>Fill in the project details</strong> and one card per final image you need.</li>
-        <li><strong>Click “Generate &amp; Send”</strong> — the finished shot list downloads as an Excel file.</li>
-        <li><strong>Attach that file</strong> to the pre-addressed email draft that opens, and hit send.</li>
-      </ol>
-      <p class="intro__note">Your work autosaves in this browser, so you can leave and come back to a draft.</p>
-    </section>
+    <p class="intro-strip">
+      Fill in one card per final image, hit <strong>Next shot</strong> to move on, then
+      <strong>Generate &amp; Send</strong> — the shot list downloads as an Excel file to attach
+      to the email draft that opens. Work autosaves in this browser.
+    </p>
 
     <form id="shotlist-form" novalidate>
       <section class="card">
@@ -45,20 +41,8 @@
             <input type="text" id="project-name" placeholder="e.g. Spring 2026 Catalog" required />
           </label>
           <label class="field">
-            <span class="field__label">Requested shoot date</span>
-            <input type="date" id="shoot-date" />
-          </label>
-          <label class="field">
-            <span class="field__label">Requested by <em>*</em></span>
-            <input type="text" id="requested-by" placeholder="Your name" required />
-          </label>
-          <label class="field">
-            <span class="field__label">Your email</span>
-            <input type="email" id="requester-email" placeholder="you@company.com" />
-          </label>
-          <label class="field">
-            <span class="field__label">Photographer email <em>*</em></span>
-            <input type="email" id="photographer-email" required />
+            <span class="field__label">Your email <em>*</em></span>
+            <input type="email" id="requester-email" placeholder="you@company.com" required />
           </label>
           <label class="field field--wide">
             <span class="field__label">General notes for the whole shoot</span>
@@ -83,75 +67,86 @@
   <!-- Template for one shot card -->
   <template id="shot-template">
     <section class="card shot-card">
-      <header class="shot-card__head">
-        <h3 class="shot-number">Shot 1</h3>
-        <div class="shot-card__tools">
-          <button type="button" class="btn btn--tiny shot-duplicate" title="Copy this shot as a starting point for another">Duplicate</button>
-          <button type="button" class="btn btn--tiny btn--danger shot-remove" title="Remove this shot">Remove</button>
+      <button type="button" class="shot-summary" hidden title="Click to expand and edit this shot">
+        <span class="shot-summary__num">Shot 1</span>
+        <span class="shot-summary__title"></span>
+        <span class="shot-summary__meta"></span>
+        <span class="shot-summary__edit">Edit ✎</span>
+      </button>
+
+      <div class="shot-card__body">
+        <header class="shot-card__head">
+          <h3 class="shot-number">Shot 1</h3>
+          <div class="shot-card__tools">
+            <button type="button" class="btn btn--tiny shot-duplicate" title="Copy this shot as a starting point for another">Duplicate</button>
+            <button type="button" class="btn btn--tiny btn--danger shot-remove" title="Remove this shot">Remove</button>
+          </div>
+        </header>
+
+        <div class="field-grid">
+          <label class="field">
+            <span class="field__label">SKU number</span>
+            <input type="text" class="f-sku" placeholder="Exact product SKU / item number" />
+          </label>
+          <label class="field">
+            <span class="field__label">Product description</span>
+            <input type="text" class="f-description" placeholder="Official product name or clear description" />
+          </label>
         </div>
-      </header>
 
-      <div class="field-grid">
-        <label class="field">
-          <span class="field__label">SKU number</span>
-          <input type="text" class="f-sku" placeholder="Exact product SKU / item number" />
-        </label>
-        <label class="field">
-          <span class="field__label">Product description</span>
-          <input type="text" class="f-description" placeholder="Official product name or clear description" />
-        </label>
-      </div>
-
-      <fieldset class="picker">
-        <legend>Shot type <em>*</em></legend>
-        <div class="mount-shot-type"></div>
-      </fieldset>
-
-      <fieldset class="picker">
-        <legend>Angle / view</legend>
-        <div class="mount-angle"></div>
-      </fieldset>
-
-      <div class="field-grid">
-        <label class="field">
-          <span class="field__label">Props / styling notes</span>
-          <textarea class="f-props" rows="2" placeholder="Arrangement, props, setup, styling direction"></textarea>
-        </label>
-        <label class="field">
-          <span class="field__label">Key features to highlight</span>
-          <textarea class="f-features" rows="2" placeholder="Details that must be visible or emphasized"></textarea>
-        </label>
-        <label class="field">
-          <span class="field__label">Reference / example link</span>
-          <input type="url" class="f-reference" placeholder="https:// link to an inspiration or example image" />
-        </label>
-        <label class="field field--narrow">
-          <span class="field__label"># of variations</span>
-          <input type="number" class="f-variations" min="1" max="99" placeholder="1" />
-        </label>
-      </div>
-
-      <div class="picker-row">
-        <fieldset class="picker picker--compact">
-          <legend>Orientation</legend>
-          <div class="mount-orientation"></div>
+        <fieldset class="picker">
+          <legend>Shot type <em>*</em></legend>
+          <div class="mount-shot-type"></div>
         </fieldset>
 
-        <fieldset class="picker picker--compact">
-          <legend>Intended use <span class="picker__hint">(pick all that apply)</span></legend>
-          <div class="mount-intended-use"></div>
+        <fieldset class="picker">
+          <legend>Angle / view</legend>
+          <div class="mount-angle"></div>
         </fieldset>
 
-        <fieldset class="picker picker--compact">
-          <legend>Priority</legend>
-          <div class="mount-priority"></div>
-        </fieldset>
+        <div class="picker">
+          <p class="picker__title">Shot notes</p>
+          <div class="field-grid field-grid--tight">
+            <label class="field">
+              <span class="field__label">Props / styling notes</span>
+              <textarea class="f-props" rows="2" placeholder="Arrangement, props, setup, styling direction"></textarea>
+            </label>
+            <label class="field">
+              <span class="field__label">Key features to highlight</span>
+              <textarea class="f-features" rows="2" placeholder="Details that must be visible or emphasized"></textarea>
+            </label>
+            <label class="field">
+              <span class="field__label">Reference / example link</span>
+              <input type="url" class="f-reference" placeholder="https:// link to an inspiration image" />
+            </label>
+            <label class="field">
+              <span class="field__label">Retouching / post notes</span>
+              <textarea class="f-retouching" rows="2" placeholder="Cleanup, compositing, color, masking…"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="picker-row">
+          <fieldset class="picker picker--compact">
+            <legend>Orientation</legend>
+            <div class="mount-orientation"></div>
+          </fieldset>
+
+          <fieldset class="picker picker--compact">
+            <legend>Intended use <span class="picker__hint">(pick all that apply)</span></legend>
+            <div class="mount-intended-use"></div>
+          </fieldset>
+
+          <fieldset class="picker picker--compact">
+            <legend>Priority</legend>
+            <div class="mount-priority"></div>
+          </fieldset>
+        </div>
+
+        <div class="shot-card__footer">
+          <button type="button" class="btn btn--primary shot-next">Next shot ↓</button>
+        </div>
       </div>
-
-      <label class="field">
-        <span class="field__label">Retouching / post-production notes</span>
-        <textarea class="f-retouching" rows="2" placeholder="Cleanup, compositing, color, masking, other post direction"></textarea>
-      </label>
     </section>
   </template>
 
@@ -165,7 +160,7 @@
         <li>An email draft to the photographer opened in your mail app.</li>
       </ol>
       <p class="overlay__cta">Last step: <strong>attach the downloaded file to that email</strong> and hit send.</p>
-      <p class="overlay__hint">No email draft? <a id="success-reopen-email" href="#">Click here to open it again</a>, or attach the file to a new email yourself.</p>
+      <p class="overlay__hint">Heads up: for security reasons, no website can attach a file to an email for you — the two-step download-then-attach is as automatic as email gets. No draft opened? <a id="success-reopen-email" href="#">Click here to open it again</a>.</p>
       <button type="button" id="success-close" class="btn btn--primary">Done</button>
     </div>
   </div>

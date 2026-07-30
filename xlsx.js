@@ -187,20 +187,20 @@
     '<font><sz val="11"/><name val="Arial"/></font>' +
     '<font><b/><sz val="11"/><name val="Arial"/></font>' +
     '<font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>' +
-    '<font><i/><sz val="10"/><color rgb="FF667066"/><name val="Arial"/></font>' +
+    '<font><i/><sz val="10"/><color rgb="FF5B6572"/><name val="Arial"/></font>' +
     '<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>' +
-    '<font><b/><sz val="11"/><color rgb="FF2F4A3A"/><name val="Arial"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FF1F4468"/><name val="Arial"/></font>' +
     "</fonts>" +
     '<fills count="5">' +
     '<fill><patternFill patternType="none"/></fill>' +
     '<fill><patternFill patternType="gray125"/></fill>' +
-    '<fill><patternFill patternType="solid"><fgColor rgb="FF2F4A3A"/></patternFill></fill>' +
-    '<fill><patternFill patternType="solid"><fgColor rgb="FF4F7660"/></patternFill></fill>' +
-    '<fill><patternFill patternType="solid"><fgColor rgb="FFE9F0EA"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF1F4468"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF3A76AD"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFE1ECF6"/></patternFill></fill>' +
     "</fills>" +
     '<borders count="2">' +
     "<border><left/><right/><top/><bottom/><diagonal/></border>" +
-    '<border><left style="thin"><color rgb="FFC8D2C9"/></left><right style="thin"><color rgb="FFC8D2C9"/></right><top style="thin"><color rgb="FFC8D2C9"/></top><bottom style="thin"><color rgb="FFC8D2C9"/></bottom><diagonal/></border>' +
+    '<border><left style="thin"><color rgb="FFC9D6E2"/></left><right style="thin"><color rgb="FFC9D6E2"/></right><top style="thin"><color rgb="FFC9D6E2"/></top><bottom style="thin"><color rgb="FFC9D6E2"/></bottom><diagonal/></border>' +
     "</borders>" +
     '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
     '<cellXfs count="9">' +
@@ -227,14 +227,13 @@
     "Props / Styling Notes",
     "Key Features to Highlight",
     "Reference / Example Link",
-    "# Variations",
     "Orientation",
     "Intended Use",
     "Priority",
     "Retouching / Notes",
   ];
 
-  const COL_WIDTHS = [8, 16, 30, 22, 22, 32, 30, 28, 12, 14, 24, 15, 32];
+  const COL_WIDTHS = [8, 16, 30, 22, 22, 32, 30, 28, 14, 24, 15, 32];
 
   function buildSheetXml(data) {
     const lastCol = colLetter(HEADERS.length); // M
@@ -249,12 +248,7 @@
     // Row 2 — project info line
     const info = [];
     info.push("Project: " + (data.project || "—"));
-    if (data.shootDate) info.push("Shoot Date: " + data.shootDate);
-    if (data.requestedBy) {
-      info.push(
-        "Requested by: " + data.requestedBy + (data.requesterEmail ? " (" + data.requesterEmail + ")" : "")
-      );
-    }
+    if (data.requesterEmail) info.push("Requested by: " + data.requesterEmail);
     if (data.photographerEmail) info.push("Photographer: " + data.photographerEmail);
     rows.push('<row r="2" ht="22" customHeight="1">' + strCell("A2", 2, info.join("   |   ")) + "</row>");
     merges.push("A2:" + lastCol + "2");
@@ -271,9 +265,9 @@
     const sections = [
       ["A", "C", "PRODUCT & SHOT"],
       ["D", "E", "CREATIVE DIRECTION"],
-      ["F", "I", "SHOT DETAILS"],
-      ["J", "K", "DELIVERABLE"],
-      ["L", "M", "PRIORITY & POST"],
+      ["F", "H", "SHOT DETAILS"],
+      ["I", "J", "DELIVERABLE"],
+      ["K", "L", "PRIORITY & POST"],
     ];
     let r4 = '<row r="4" ht="18" customHeight="1">';
     for (const [c1, c2, label] of sections) {
@@ -292,7 +286,7 @@
     rows.push(r5);
 
     // Rows 6+ — one row per shot
-    const centeredCols = new Set([1, 9, 10, 12]); // Shot #, # Variations, Orientation, Priority
+    const centeredCols = new Set([1, 9, 11]); // Shot #, Orientation, Priority
     let rowIdx = 6;
     (data.shots || []).forEach(function (shot, i) {
       const values = [
@@ -304,7 +298,6 @@
         shot.props,
         shot.features,
         shot.referenceLink,
-        shot.variations,
         shot.orientation,
         Array.isArray(shot.intendedUse) ? shot.intendedUse.join(", ") : shot.intendedUse,
         shot.priority,
@@ -314,7 +307,7 @@
       values.forEach(function (v, c) {
         const ref = colLetter(c + 1) + rowIdx;
         const style = centeredCols.has(c + 1) ? 7 : 6;
-        if ((c === 0 || c === 8) && v !== "" && v != null && isFinite(Number(v))) {
+        if (c === 0 && v !== "" && v != null && isFinite(Number(v))) {
           row += numCell(ref, style, Number(v));
         } else {
           row += strCell(ref, style, v);

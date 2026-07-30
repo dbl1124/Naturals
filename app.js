@@ -20,7 +20,6 @@
   document.addEventListener("DOMContentLoaded", function () {
     $("#site-title").textContent = cfg.siteTitle;
     $("#company-name").textContent = cfg.companyName;
-    $("#photographer-email").value = cfg.photographerEmail || "";
 
     const restored = restoreDraft();
     if (!restored) addShot();
@@ -88,12 +87,26 @@
       caption.className = "tile__label";
       caption.textContent = opt.value;
 
-      const hint = document.createElement("span");
-      hint.className = "tile__hint";
-      hint.textContent = opt.hint || "";
-
-      label.append(input, art, caption, hint);
+      label.append(input, art, caption);
       wrap.appendChild(label);
+    });
+    return wrap;
+  }
+
+  // Shot types render as labeled clusters ("Studio", "Lifestyle & In-Use"…)
+  // that all share one radio group.
+  function groupedTiles(groups, groupName) {
+    const wrap = document.createElement("div");
+    wrap.className = "tile-groups";
+    groups.forEach(function (g) {
+      const block = document.createElement("div");
+      block.className = "tile-group";
+      const label = document.createElement("p");
+      label.className = "tile-group__label";
+      label.textContent = g.label;
+      block.appendChild(label);
+      block.appendChild(tileGroup(g.options, groupName));
+      wrap.appendChild(block);
     });
     return wrap;
   }
@@ -106,7 +119,7 @@
     card.dataset.shotId = id;
 
     // Mount visual pickers with per-card group names
-    $(".mount-shot-type", card).appendChild(tileGroup(cfg.shotTypes, "shot-" + id + "-type"));
+    $(".mount-shot-type", card).appendChild(groupedTiles(cfg.shotTypeGroups, "shot-" + id + "-type"));
     $(".mount-angle", card).appendChild(tileGroup(cfg.angles, "shot-" + id + "-angle"));
     $(".mount-orientation", card).appendChild(
       tileGroup(cfg.orientations, "shot-" + id + "-orientation", { small: true })
@@ -138,15 +151,68 @@
       saveDraft();
     });
 
+    $(".shot-next", card).addEventListener("click", function () {
+      if ($$(".shot-card").length >= cfg.maxShots) {
+        alert("Maximum of " + cfg.maxShots + " shots per request.");
+        return;
+      }
+      collapseShot(card);
+      const next = addShot();
+      next.scrollIntoView({ behavior: "smooth", block: "start" });
+      saveDraft();
+    });
+
+    $(".shot-summary", card).addEventListener("click", function () {
+      expandShot(card);
+    });
+
     $("#shots").appendChild(card);
     if (prefill) writeShot(card, prefill);
     renumberShots();
     return card;
   }
 
+  /* ---------------- collapse / expand ---------------- */
+  function collapseShot(card) {
+    const s = readShot(card);
+    const idx = $$(".shot-card").indexOf(card) + 1;
+
+    $(".shot-summary__num", card).textContent = "Shot " + idx;
+    $(".shot-summary__title", card).textContent =
+      s.description || s.sku || "(no product yet)";
+
+    const meta = [
+      s.shotType,
+      s.angle,
+      s.orientation,
+      (s.intendedUse || []).join(", "),
+      s.priority,
+    ].filter(Boolean);
+    $(".shot-summary__meta", card).innerHTML = meta
+      .map(function (m) {
+        return "<span>" + escapeHtml(m) + "</span>";
+      })
+      .join('<span class="dot">·</span>');
+
+    card.classList.add("shot-card--collapsed");
+    $(".shot-summary", card).hidden = false;
+  }
+
+  function expandShot(card) {
+    card.classList.remove("shot-card--collapsed");
+    $(".shot-summary", card).hidden = true;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
   function renumberShots() {
     $$(".shot-card").forEach(function (card, i) {
       $(".shot-number", card).textContent = "Shot " + (i + 1);
+      $(".shot-summary__num", card).textContent = "Shot " + (i + 1);
     });
     updateShotCount();
   }
@@ -174,7 +240,6 @@
       props: $(".f-props", card).value.trim(),
       features: $(".f-features", card).value.trim(),
       referenceLink: $(".f-reference", card).value.trim(),
-      variations: $(".f-variations", card).value.trim(),
       orientation: picked("orientation"),
       intendedUse: pickedAll("use"),
       priority: picked("priority"),
@@ -188,7 +253,6 @@
     $(".f-props", card).value = s.props || "";
     $(".f-features", card).value = s.features || "";
     $(".f-reference", card).value = s.referenceLink || "";
-    $(".f-variations", card).value = s.variations || "";
     $(".f-retouching", card).value = s.retouching || "";
     const check = function (suffix, value) {
       if (!value) return;
@@ -209,10 +273,8 @@
     return {
       companyName: cfg.companyName,
       project: $("#project-name").value.trim(),
-      shootDate: $("#shoot-date").value,
-      requestedBy: $("#requested-by").value.trim(),
       requesterEmail: $("#requester-email").value.trim(),
-      photographerEmail: $("#photographer-email").value.trim(),
+      photographerEmail: cfg.photographerEmail,
       notes: $("#general-notes").value.trim(),
       shots: $$(".shot-card").map(readShot),
     };
@@ -235,14 +297,14 @@
     }
     if (!data || !Array.isArray(data.shots) || data.shots.length === 0) return false;
     $("#project-name").value = data.project || "";
-    $("#shoot-date").value = data.shootDate || "";
-    $("#requested-by").value = data.requestedBy || "";
     $("#requester-email").value = data.requesterEmail || "";
-    if (data.photographerEmail) $("#photographer-email").value = data.photographerEmail;
     $("#general-notes").value = data.notes || "";
     data.shots.forEach(function (s) {
       addShot(s);
     });
+    // Collapse everything but the last shot so a big draft stays scannable
+    const cards = $$(".shot-card");
+    cards.slice(0, -1).forEach(collapseShot);
     return true;
   }
 
@@ -256,25 +318,23 @@
     if (!data.project) {
       problems.push({ el: $("#project-name"), msg: "Project name is required." });
     }
-    if (!data.requestedBy) {
-      problems.push({ el: $("#requested-by"), msg: "Your name is required so the photographer knows who asked." });
-    }
-    if (!data.photographerEmail) {
-      problems.push({ el: $("#photographer-email"), msg: "Photographer email is required." });
+    if (!data.requesterEmail) {
+      problems.push({ el: $("#requester-email"), msg: "Your email is required so the photographer can reply to you." });
     }
 
     $$(".shot-card").forEach(function (card, i) {
       const s = data.shots[i];
       if (!s.sku && !s.description) {
-        problems.push({ el: $(".f-description", card), msg: "Shot " + (i + 1) + ": add a SKU or product description." });
+        problems.push({ el: $(".f-description", card), card: card, msg: "Shot " + (i + 1) + ": add a SKU or product description." });
       }
       if (!s.shotType) {
-        problems.push({ el: $(".mount-shot-type", card), msg: "Shot " + (i + 1) + ": pick a shot type." });
+        problems.push({ el: $(".mount-shot-type", card), card: card, msg: "Shot " + (i + 1) + ": pick a shot type." });
       }
     });
 
     if (problems.length) {
       problems.forEach(function (p) {
+        if (p.card) expandShot(p.card); // surface problems hidden in collapsed shots
         p.el.classList.add("invalid");
       });
       const box = $("#error-box");
@@ -345,25 +405,21 @@
     const lines = [
       "Hi,",
       "",
-      "A new photography shot list is ready for you.",
+      "New photography shot list for \"" + data.project + "\" — " +
+        data.shots.length + " shot" + (data.shots.length === 1 ? "" : "s") +
+        (mustHaves ? " (" + mustHaves + " must-have)" : "") + ".",
+      "Requested by: " + data.requesterEmail,
       "",
-      "Project: " + data.project,
-      data.shootDate ? "Requested shoot date: " + data.shootDate : null,
-      "Requested by: " + data.requestedBy + (data.requesterEmail ? " (" + data.requesterEmail + ")" : ""),
-      "Shots requested: " + data.shots.length + (mustHaves ? " (" + mustHaves + " must-have)" : ""),
-      "",
-      "The full shot list spreadsheet (" + fileName + ") just downloaded on my computer — I’m attaching it to this email.",
-      data.notes ? "" : null,
-      data.notes ? "Notes: " + data.notes.slice(0, 400) : null,
+      "The full shot list is in the attached spreadsheet (" + fileName + ").",
       "",
       "Thanks!",
-    ].filter(function (l) {
-      return l !== null;
-    });
+    ];
 
+    // NOTE: the address must NOT be URL-encoded — encoding the "@" makes
+    // some mail clients treat the whole string as a garbled recipient.
     return (
       "mailto:" +
-      encodeURIComponent(data.photographerEmail) +
+      data.photographerEmail +
       "?subject=" +
       encodeURIComponent("Photography Shot List — " + data.project + " (" + data.shots.length + " shots)") +
       "&body=" +
