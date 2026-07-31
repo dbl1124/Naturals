@@ -203,6 +203,56 @@ textarea.invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 3px
 
 div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); padding: 6px; }
 
+/* ---------------- multi-SKU shots ---------------- */
+.sku-field { gap: 6px; }
+
+.sku-single { display: flex; flex-direction: column; gap: 5px; }
+.sku-single[hidden] { display: none; }
+
+/* deliberately quiet — single-SKU stays the path of least resistance */
+.linkish {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--brand-600);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.linkish:hover { color: var(--brand-700); }
+.linkish[hidden] { display: none; }
+
+.sku-multi { display: flex; flex-direction: column; gap: 5px; }
+.sku-multi[hidden] { display: none; }
+
+.sku-multi textarea { font-size: 0.9rem; line-height: 1.35; }
+
+.sku-multi__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sku-count { font-size: 0.78rem; font-weight: 600; color: var(--brand-700); }
+
+.sku-multi__help,
+.sku-nudge {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.sku-nudge {
+  color: var(--amber);
+  font-weight: 600;
+}
+.sku-nudge[hidden] { display: none; }
+
 /* ---------------- shot sections & pickers ---------------- */
 .picker {
   border: none;

@@ -103,10 +103,24 @@
         </header>
 
         <div class="field-grid">
-          <label class="field">
-            <span class="field__label">SKU number</span>
-            <input type="text" class="f-sku" placeholder="Exact product SKU / item number" />
-          </label>
+          <div class="field sku-field">
+            <label class="sku-single">
+              <span class="field__label">SKU number</span>
+              <input type="text" class="f-sku" placeholder="Exact product SKU / item number" />
+            </label>
+            <button type="button" class="linkish sku-multi-on">＋ This shot applies to multiple SKUs</button>
+
+            <div class="sku-multi" hidden>
+              <span class="field__label">SKU numbers</span>
+              <textarea class="f-sku-list" rows="4" placeholder="Paste a column of SKUs straight from Excel — one per line (commas work too)"></textarea>
+              <div class="sku-multi__foot">
+                <span class="sku-count">No SKUs yet</span>
+                <button type="button" class="linkish sku-multi-off">Back to a single SKU</button>
+              </div>
+              <p class="sku-multi__help">One shot, shot identically across these products — different framing needs its own card.</p>
+              <p class="sku-nudge" hidden>That's a lot of products in one setup — sure they're all shot identically?</p>
+            </div>
+          </div>
           <label class="field">
             <span class="field__label">Product description</span>
             <input type="text" class="f-description" placeholder="Official product name or clear description" />

@@ -27,10 +27,36 @@ everything, including writing the Excel file in the browser.
   `--sec-*` variables at the top of `styles.css`.
 - **Reference images**: each shot can carry up to 4 uploaded images (auto
   downscaled in the browser); they're embedded in the generated Excel file.
+- **One shot across many SKUs**: a quiet *"This shot applies to multiple
+  SKUs"* link under the SKU field swaps it for a paste box — paste a
+  column straight out of Excel. See below.
 - Clicking **"Next shot"** (or the **Collapse** button in the card header)
   folds the shot into a thin at-a-glance summary bar — so a 20-shot list
   stays scannable instead of becoming one huge scroll. Click any summary
   bar to expand and edit that shot again.
+
+## Open stock: one shot, many SKUs
+
+Requestors with 75 open-stock items that all need the same shot shouldn't
+have to fill in 75 cards. Clicking **"This shot applies to multiple SKUs"**
+turns the SKU field into a paste box that accepts a column copied from
+Excel (newlines, commas, tabs, and semicolons all work). It trims blanks,
+drops repeats case-insensitively, and shows a running count.
+
+**In the spreadsheet, each SKU gets its own row** so the photographer has
+a checklist to work through on set. A shot numbered 7 covering 75 SKUs
+becomes rows `7.1` through `7.75`, every spec column identical, with the
+shared `7.` prefix keeping the grouping readable. Single-SKU shots keep a
+plain integer. Reference-image notes appear on the group's first row only.
+
+This is deliberately kept as a *secondary* path so single-SKU stays the
+default: it's a small text link rather than a button, it isn't mentioned
+in the intro copy, and it changes nothing about validation — a 75-SKU card
+still can't be submitted without a shot type. The helper text under the
+paste box ("different framing needs its own card") is what discourages
+lumping unrelated shots together, and past 25 SKUs a soft nudge asks
+whether they're really all shot identically. Change `SKU_NUDGE_AT` in
+`app.js` to move that threshold.
 
 ## Coming back to an unfinished list
 
@@ -48,7 +74,9 @@ IndexedDB rather than `localStorage` because reference images are big:
 IndexedDB stores the image bytes directly (no base64 padding) with a
 quota measured in hundreds of MB.
 
-**Draft files (anywhere).** **Save draft file** downloads a small `.json`
+**Draft files (anywhere).** Draft files are versioned; v1 drafts saved
+before multi-SKU support still load, with their single SKU migrated into
+the new list. **Save draft file** downloads a small `.json`
 containing the whole list, images and all; **Load draft file** reads one
 back. That's the way to move a half-finished list between computers, or
 hand it to a colleague to finish. A one-shot draft with a reference image

@@ -315,44 +315,52 @@
     r5 += "</row>";
     rows.push(r5);
 
-    // Rows 6+ — one row per shot
+    // Rows 6+ — one row per SKU. A shot covering 75 open-stock SKUs
+    // becomes rows 7.1 … 7.75 so the photographer gets a checklist,
+    // with the shared "7." prefix keeping the grouping visible.
     const centeredCols = new Set([1, 9, 11]); // Shot #, Orientation, Priority
     let rowIdx = 6;
     (data.shots || []).forEach(function (shot, i) {
       const imgCount = (shot.refImages || []).length;
-      const refText =
-        (shot.referenceLink || "") +
-        (imgCount
-          ? (shot.referenceLink ? "  —  " : "") +
-            imgCount + " image" + (imgCount > 1 ? "s" : "") + " attached (see “Reference Images” tab)"
-          : "");
-      const values = [
-        i + 1,
-        shot.sku,
-        shot.description,
-        shot.shotType,
-        shot.angle,
-        shot.props,
-        shot.features,
-        refText,
-        shot.orientation,
-        Array.isArray(shot.intendedUse) ? shot.intendedUse.join(", ") : shot.intendedUse,
-        shot.priority,
-        shot.retouching,
-      ];
-      let row = '<row r="' + rowIdx + '">';
-      values.forEach(function (v, c) {
-        const ref = colLetter(c + 1) + rowIdx;
-        const style = centeredCols.has(c + 1) ? 7 : 6;
-        if (c === 0 && v !== "" && v != null && isFinite(Number(v))) {
-          row += numCell(ref, style, Number(v));
-        } else {
-          row += strCell(ref, style, v);
-        }
+      const skus = shot.skus && shot.skus.length ? shot.skus : [""];
+      const multi = skus.length > 1;
+
+      skus.forEach(function (sku, j) {
+        // Only the first row of a group carries the attachment note
+        const refText =
+          (shot.referenceLink || "") +
+          (imgCount && j === 0
+            ? (shot.referenceLink ? "  —  " : "") +
+              imgCount + " image" + (imgCount > 1 ? "s" : "") + " attached (see “Reference Images” tab)"
+            : "");
+        const values = [
+          multi ? i + 1 + "." + (j + 1) : i + 1,
+          sku,
+          shot.description,
+          shot.shotType,
+          shot.angle,
+          shot.props,
+          shot.features,
+          refText,
+          shot.orientation,
+          Array.isArray(shot.intendedUse) ? shot.intendedUse.join(", ") : shot.intendedUse,
+          shot.priority,
+          shot.retouching,
+        ];
+        let row = '<row r="' + rowIdx + '">';
+        values.forEach(function (v, c) {
+          const ref = colLetter(c + 1) + rowIdx;
+          const style = centeredCols.has(c + 1) ? 7 : 6;
+          if (c === 0 && !multi) {
+            row += numCell(ref, style, Number(v));
+          } else {
+            row += strCell(ref, style, v);
+          }
+        });
+        row += "</row>";
+        rows.push(row);
+        rowIdx++;
       });
-      row += "</row>";
-      rows.push(row);
-      rowIdx++;
     });
 
     // Optional general notes block

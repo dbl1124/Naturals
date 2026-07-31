@@ -22,7 +22,7 @@
   const KEY = "current";
 
   const FILE_MARKER = "shotlist-draft";
-  const FILE_VERSION = 1;
+  const FILE_VERSION = 2; // v2 replaced a shot's single `sku` with a `skus` list
 
   /* ---------------- base64 <-> bytes ---------------- */
   function dataUrlToBytes(dataUrl) {
@@ -44,6 +44,17 @@
   }
 
   /* ---------------- shape conversion ---------------- */
+  // Drafts saved before multi-SKU support carry a single `sku` string.
+  function migrate(data) {
+    return Object.assign({}, data, {
+      shots: (data.shots || []).map(function (s) {
+        if (s.skus) return s;
+        const one = (s.sku || "").trim();
+        return Object.assign({}, s, { skus: one ? [one] : [], multiSku: false });
+      }),
+    });
+  }
+
   // In memory each reference image is { name, dataUrl, w, h }.
   // On disk we swap the data URL for raw bytes.
   function toStored(data) {
@@ -58,7 +69,8 @@
     });
   }
 
-  function fromStored(data) {
+  function fromStored(raw) {
+    const data = migrate(raw);
     return Object.assign({}, data, {
       shots: (data.shots || []).map(function (s) {
         return Object.assign({}, s, {
@@ -157,7 +169,7 @@
     if (!payload.data || !Array.isArray(payload.data.shots)) {
       throw new Error("That draft file looks damaged — no shots found in it.");
     }
-    return payload.data;
+    return migrate(payload.data);
   }
 
   global.ShotlistStorage = {

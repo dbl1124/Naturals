@@ -94,7 +94,7 @@
   function isEmpty(data) {
     if (data.project || data.requesterEmail || data.notes) return false;
     return !data.shots.some(function (s) {
-      return s.sku || s.description || s.shotType || s.angle || s.props || s.features ||
+      return s.skus.length || s.description || s.shotType || s.angle || s.props || s.features ||
         s.referenceLink || s.retouching || s.orientation || s.priority ||
         (s.intendedUse || []).length || (s.refImages || []).length;
     });
@@ -282,6 +282,82 @@
     return wrap;
   }
 
+  /* ---------------- multi-SKU shots ---------------- */
+  const SKU_NUDGE_AT = 25;
+
+  // Accepts a column pasted from Excel, or commas / tabs / semicolons.
+  // Trims, drops blanks, and removes repeats (case-insensitively, keeping
+  // the casing of the first occurrence).
+  function parseSkus(text) {
+    const seen = new Set();
+    const out = [];
+    let dupes = 0;
+    String(text || "")
+      .split(/[\r\n,;\t]+/)
+      .forEach(function (raw) {
+        const sku = raw.trim();
+        if (!sku) return;
+        const key = sku.toLowerCase();
+        if (seen.has(key)) { dupes++; return; }
+        seen.add(key);
+        out.push(sku);
+      });
+    out.duplicatesRemoved = dupes;
+    return out;
+  }
+
+  function isMultiSku(card) {
+    return card.classList.contains("sku-mode-multi");
+  }
+
+  function setSkuMode(card, multi) {
+    card.classList.toggle("sku-mode-multi", !!multi);
+    $(".sku-single", card).hidden = !!multi;
+    $(".sku-multi-on", card).hidden = !!multi;
+    $(".sku-multi", card).hidden = !multi;
+  }
+
+  function initSkuField(card) {
+    const list = $(".f-sku-list", card);
+
+    $(".sku-multi-on", card).addEventListener("click", function () {
+      // Carry a single SKU over rather than making them retype it
+      const single = $(".f-sku", card).value.trim();
+      if (single && !list.value.trim()) list.value = single;
+      setSkuMode(card, true);
+      updateSkuCount(card);
+      list.focus();
+      scheduleSave();
+    });
+
+    $(".sku-multi-off", card).addEventListener("click", function () {
+      const skus = parseSkus(list.value);
+      if (skus.length > 1 &&
+          !confirm("Going back to a single SKU keeps only the first of " + skus.length + ". Continue?")) {
+        return;
+      }
+      $(".f-sku", card).value = skus[0] || "";
+      list.value = "";
+      setSkuMode(card, false);
+      updateSkuCount(card);
+      scheduleSave();
+    });
+
+    list.addEventListener("input", function () { updateSkuCount(card); });
+  }
+
+  function updateSkuCount(card) {
+    const skus = parseSkus($(".f-sku-list", card).value);
+    const n = skus.length;
+    let text = n === 0 ? "No SKUs yet" : n + (n === 1 ? " SKU" : " SKUs");
+    if (skus.duplicatesRemoved) {
+      text += " · " + skus.duplicatesRemoved + " duplicate" +
+        (skus.duplicatesRemoved > 1 ? "s" : "") + " ignored";
+    }
+    $(".sku-count", card).textContent = text;
+    $(".sku-nudge", card).hidden = n < SKU_NUDGE_AT;
+  }
+
   /* ---------------- reference image uploads ---------------- */
   function initRefUpload(card) {
     const fileInput = $(".f-ref-files", card);
@@ -391,6 +467,7 @@
       tileGroup(cfg.priorities, "shot-" + id + "-priority", { small: true })
     );
 
+    initSkuField(card);
     initRefUpload(card);
 
     $(".shot-remove", card).addEventListener("click", function () {
@@ -443,11 +520,13 @@
     const s = readShot(card);
     const idx = $$(".shot-card").indexOf(card) + 1;
 
+    const skuLabel = s.skus.length > 1 ? s.skus.length + " SKUs" : s.skus[0] || "";
     $(".shot-summary__num", card).textContent = "Shot " + idx;
     $(".shot-summary__title", card).textContent =
-      s.description || s.sku || "(no product yet)";
+      s.description || skuLabel || "(no product yet)";
 
     const meta = [
+      s.description && skuLabel ? skuLabel : "",
       s.shotType,
       s.angle,
       s.orientation,
@@ -499,8 +578,11 @@
         return el.value;
       });
     };
+    const multi = isMultiSku(card);
+    const single = $(".f-sku", card).value.trim();
     return {
-      sku: $(".f-sku", card).value.trim(),
+      skus: multi ? Array.from(parseSkus($(".f-sku-list", card).value)) : single ? [single] : [],
+      multiSku: multi,
       description: $(".f-description", card).value.trim(),
       shotType: picked("type"),
       angle: picked("angle"),
@@ -516,7 +598,17 @@
   }
 
   function writeShot(card, s) {
-    $(".f-sku", card).value = s.sku || "";
+    const skus = s.skus || [];
+    const multi = s.multiSku || skus.length > 1;
+    setSkuMode(card, multi);
+    if (multi) {
+      $(".f-sku-list", card).value = skus.join("\n");
+      $(".f-sku", card).value = "";
+    } else {
+      $(".f-sku", card).value = skus[0] || "";
+      $(".f-sku-list", card).value = "";
+    }
+    updateSkuCount(card);
     $(".f-description", card).value = s.description || "";
     $(".f-props", card).value = s.props || "";
     $(".f-features", card).value = s.features || "";
@@ -565,7 +657,7 @@
 
     $$(".shot-card").forEach(function (card, i) {
       const s = data.shots[i];
-      if (!s.sku && !s.description) {
+      if (!s.skus.length && !s.description) {
         problems.push({ el: $(".f-description", card), card: card, msg: "Shot " + (i + 1) + ": add a SKU or product description." });
       }
       if (!s.shotType) {
