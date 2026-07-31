@@ -41,6 +41,7 @@ everything, including writing the Excel file in the browser.
 | `config.js` | **The file you edit** — company name, all picker options and their thumbnails |
 | `app.js` | Form behavior: shot cards, collapse/expand, image uploads, validation, download |
 | `xlsx.js` | Self-contained `.xlsx` writer (an xlsx is a ZIP of XML — built by hand, no dependencies) |
+| `vercel.json` | Hosting config: security headers, no stale caching |
 
 ## Things you'll want to change
 
@@ -57,7 +58,35 @@ All in **`config.js`**:
 
 Just open `index.html` in a browser — everything works from a `file://` URL.
 
-## Put it online with GitHub Pages (free)
+## Put it online with Vercel (recommended)
+
+The repo is deploy-ready: it's plain static files, so there's **no build
+step and no framework** to configure. `vercel.json` sets security headers
+and tells browsers to revalidate `.js`/`.css`/`.html` on every load, so an
+edit to `config.js` goes live the moment it's redeployed.
+
+**Option A — connect the Git repo (auto-deploys on every push):**
+
+1. Go to [vercel.com/new](https://vercel.com/new) and sign in with GitHub.
+2. Import this repository. When asked for a **Framework Preset**, choose
+   **Other**. Leave Build Command and Output Directory empty — the root
+   of the repo *is* the site.
+3. Deploy. You'll get a `https://<project>.vercel.app` URL in under a
+   minute, and every later push redeploys automatically.
+
+**Option B — no Git needed:** install the CLI with `npm i -g vercel`, run
+`vercel` from this folder, and answer the prompts (accept the defaults;
+again, no build command). `vercel --prod` publishes to the production URL.
+
+**Custom domain:** Vercel project → **Settings → Domains → Add**, then
+point a `CNAME` record at `cname.vercel-dns.com`. Vercel issues the HTTPS
+certificate automatically.
+
+Nothing in this app runs on a server and there are no secrets or
+environment variables to set — every requestor's data stays in their own
+browser until they download their file.
+
+## Or use GitHub Pages (free)
 
 1. Merge this branch to `main` (or use the branch as-is).
 2. In the GitHub repo: **Settings → Pages → Source: "Deploy from a branch"**,
