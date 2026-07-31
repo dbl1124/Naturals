@@ -32,6 +32,32 @@ everything, including writing the Excel file in the browser.
   stays scannable instead of becoming one huge scroll. Click any summary
   bar to expand and edit that shot again.
 
+## Coming back to an unfinished list
+
+Two independent safety nets, neither needing a server:
+
+**Autosave (this browser).** Every edit is saved to IndexedDB about half a
+second later, images included. Reopen the form and a banner offers to
+*pick up where you left off*. The draft is **never restored silently** —
+an opened form is always blank until the requestor chooses, so a shared
+computer never shows one person's work to the next. "Discard it" and
+"Clear form" both delete the stored copy.
+
+IndexedDB rather than `localStorage` because reference images are big:
+`localStorage` tops out near 5 MB, which is about five images, while
+IndexedDB stores the image bytes directly (no base64 padding) with a
+quota measured in hundreds of MB.
+
+**Draft files (anywhere).** **Save draft file** downloads a small `.json`
+containing the whole list, images and all; **Load draft file** reads one
+back. That's the way to move a half-finished list between computers, or
+hand it to a colleague to finish. A one-shot draft with a reference image
+runs a few hundred KB. Loading a file that isn't a draft is refused with a
+plain-English message rather than a broken form.
+
+Autosave covers "I closed the tab by accident"; draft files cover "I need
+to finish this somewhere else."
+
 ## Files
 
 | File | What it does |
@@ -40,6 +66,7 @@ everything, including writing the Excel file in the browser.
 | `styles.css` | Styling — brand blue plus the cool section palette |
 | `config.js` | **The file you edit** — company name, all picker options and their thumbnails |
 | `app.js` | Form behavior: shot cards, collapse/expand, image uploads, validation, download |
+| `storage.js` | Draft autosave (IndexedDB) and the save/load draft-file format |
 | `xlsx.js` | Self-contained `.xlsx` writer (an xlsx is a ZIP of XML — built by hand, no dependencies) |
 | `vercel.json` | Hosting config: security headers, no stale caching |
 
@@ -104,8 +131,12 @@ upload the five files, done.
   service (EmailJS / Formspree / similar) — browsers can't attach a file to
   an email on their own. The data object handed to `buildShotListXlsx()`
   is the single thing you'd post to such a service.
-- **The form always opens blank** — nothing is saved between visits, so
-  every requestor starts from a clean slate. (If you ever want draft
-  autosave back, it existed in an earlier version of `app.js`.)
+- **The form always opens blank**, even when a draft is stored — restoring
+  is always an explicit click. See *Coming back to an unfinished list*.
+- **Drafts never leave the requestor's machine.** Autosaved lists live in
+  their own browser; draft files land in their own Downloads folder. If
+  you ever want drafts that sync across devices or shareable resume links,
+  that needs a backend — a serverless function plus blob storage — and a
+  decision about who may read stored drafts and for how long.
 - **Wrike**: as in the original workbook, production status/approvals stay in
   Wrike — this form only creates the request.

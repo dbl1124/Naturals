@@ -21,11 +21,24 @@
           <p class="topbar__sub"><span id="company-name">ATG</span> · photo request form</p>
         </div>
       </div>
-      <span class="shot-count-badge" id="shot-count">1 shot</span>
+      <div class="topbar__status">
+        <span class="autosave-status" id="autosave-status" hidden></span>
+        <span class="shot-count-badge" id="shot-count">1 shot</span>
+      </div>
     </div>
   </header>
 
   <main class="page">
+    <div id="draft-banner" class="draft-banner" hidden>
+      <span class="draft-banner__text">
+        You have an unfinished shot list saved <strong id="draft-when">earlier</strong>.
+      </span>
+      <span class="draft-banner__actions">
+        <button type="button" id="draft-restore" class="btn btn--tiny btn--restore">Pick up where I left off</button>
+        <button type="button" id="draft-discard" class="btn btn--tiny btn--danger">Discard it</button>
+      </span>
+    </div>
+
     <p class="intro-strip">
       Fill in one card per final image, hit <strong>Next shot</strong> to move on, then
       <strong>Download Shot List</strong> — you'll get a single Excel file with every shot
@@ -58,7 +71,12 @@
       <div id="error-box" class="error-box" hidden></div>
 
       <div class="actionbar">
-        <button type="button" id="clear-form" class="btn btn--ghost">Clear form</button>
+        <div class="actionbar__tools">
+          <button type="button" id="clear-form" class="btn btn--ghost">Clear form</button>
+          <button type="button" id="save-draft" class="btn btn--ghost" title="Download an editable draft you can re-open later or send to a colleague">Save draft file</button>
+          <button type="button" id="load-draft" class="btn btn--ghost" title="Open a draft file you saved earlier">Load draft file</button>
+          <input type="file" id="draft-file-input" accept=".json,application/json" hidden />
+        </div>
         <button type="submit" class="btn btn--primary">⬇ Download Shot List</button>
       </div>
     </form>
@@ -172,6 +190,7 @@
 
   <script src="config.js"></script>
   <script src="xlsx.js"></script>
+  <script src="storage.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

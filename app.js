@@ -3,16 +3,22 @@
    Renders shot cards, visual pickers, reference image uploads,
    and on submit downloads a single .xlsx with every shot and
    its reference images embedded.
-   The form always starts blank — nothing is persisted.
+
+   Work autosaves to IndexedDB, but a saved draft is never
+   restored silently: an opened form is always blank until the
+   requestor chooses to pick up where they left off.
    ============================================================ */
 
 (function () {
   "use strict";
 
   const cfg = SHOTLIST_CONFIG;
+  const store = window.ShotlistStorage;
   const MAX_REF_IMAGES = 4;
 
   let shotSeq = 0; // unique id source for radio-group names
+  let autosaveOn = false; // stays off while an undecided draft banner is up
+  let saveTimer = null;
 
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
@@ -26,6 +32,7 @@
     try { localStorage.removeItem("shotlist-draft-v1"); } catch (e) { /* ignore */ }
 
     addShot();
+    initDraftBanner();
 
     $("#add-shot").addEventListener("click", function () {
       if ($$(".shot-card").length >= cfg.maxShots) {
@@ -34,11 +41,14 @@
       }
       const card = addShot();
       card.scrollIntoView({ behavior: "smooth", block: "start" });
+      scheduleSave();
     });
 
     $("#clear-form").addEventListener("click", function () {
-      if (!confirm("Clear the whole form? This removes every shot and all project details.")) return;
-      window.location.reload();
+      if (!confirm("Clear the whole form? This removes every shot, all project details, and the autosaved copy.")) return;
+      discardStoredDraft().then(function () {
+        window.location.reload();
+      });
     });
 
     $("#shotlist-form").addEventListener("submit", function (e) {
@@ -46,12 +56,183 @@
       onSubmit();
     });
 
+    // Autosave on any edit — typing, tile picks, everything
+    $("#shotlist-form").addEventListener("input", scheduleSave);
+    $("#shotlist-form").addEventListener("change", scheduleSave);
+
+    $("#save-draft").addEventListener("click", saveDraftFile);
+    $("#load-draft").addEventListener("click", function () {
+      $("#draft-file-input").click();
+    });
+    $("#draft-file-input").addEventListener("change", loadDraftFile);
+
     $("#success-close").addEventListener("click", function () {
       $("#success-overlay").hidden = true;
     });
 
     updateShotCount();
   });
+
+  /* ---------------- autosave ---------------- */
+  function scheduleSave() {
+    if (!autosaveOn || !store) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      const data = collectData();
+      if (isEmpty(data)) {
+        // Nothing worth keeping — drop any stale copy instead
+        store.clearDraft().catch(function () {});
+        return;
+      }
+      store
+        .saveDraft(data)
+        .then(function () { flashStatus("Draft saved"); })
+        .catch(function (err) { flashStatus("Couldn't autosave", true); console.warn("Autosave failed:", err); });
+    }, 600);
+  }
+
+  function isEmpty(data) {
+    if (data.project || data.requesterEmail || data.notes) return false;
+    return !data.shots.some(function (s) {
+      return s.sku || s.description || s.shotType || s.angle || s.props || s.features ||
+        s.referenceLink || s.retouching || s.orientation || s.priority ||
+        (s.intendedUse || []).length || (s.refImages || []).length;
+    });
+  }
+
+  function flashStatus(msg, isError) {
+    const el = $("#autosave-status");
+    el.textContent = msg;
+    el.classList.toggle("autosave-status--error", !!isError);
+    el.hidden = false;
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.hidden = true; }, 2500);
+  }
+
+  /* ---------------- restore banner ---------------- */
+  function initDraftBanner() {
+    if (!store) { autosaveOn = true; return; }
+    store
+      .loadDraft()
+      .then(function (found) {
+        if (!found) { autosaveOn = true; return; }
+
+        const banner = $("#draft-banner");
+        $("#draft-when").textContent = friendlyTime(found.savedAt);
+        banner.hidden = false;
+
+        $("#draft-restore").addEventListener("click", function () {
+          if (!isEmpty(collectData()) &&
+              !confirm("Restoring the saved draft will replace what's currently on the form. Continue?")) {
+            return;
+          }
+          applyData(found.data);
+          banner.hidden = true;
+          autosaveOn = true;
+          flashStatus("Draft restored");
+        });
+
+        $("#draft-discard").addEventListener("click", function () {
+          if (!confirm("Discard the saved draft? This can't be undone.")) return;
+          discardStoredDraft().then(function () {
+            banner.hidden = true;
+            autosaveOn = true;
+          });
+        });
+      })
+      .catch(function (err) {
+        // Private browsing, blocked storage, etc. — the form still works,
+        // and draft files remain available.
+        console.warn("Draft lookup failed:", err);
+        autosaveOn = true;
+      });
+  }
+
+  function discardStoredDraft() {
+    if (!store) return Promise.resolve();
+    return store.clearDraft().catch(function (err) {
+      console.warn("Could not clear draft:", err);
+    });
+  }
+
+  function friendlyTime(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return "earlier";
+    const sameDay = new Date().toDateString() === d.toDateString();
+    return sameDay
+      ? "today at " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+      : d.toLocaleDateString(undefined, { month: "long", day: "numeric" }) +
+        " at " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  }
+
+  /* ---------------- draft files ---------------- */
+  function saveDraftFile() {
+    const data = collectData();
+    if (isEmpty(data)) {
+      alert("There's nothing to save yet — fill in a shot first.");
+      return;
+    }
+    const name =
+      "Shot_List_DRAFT_" + slug(data.project) + "_" + new Date().toISOString().slice(0, 10) + ".json";
+    downloadBlob(store.toDraftFile(data), name);
+    flashStatus("Draft file saved");
+  }
+
+  function loadDraftFile() {
+    const input = $("#draft-file-input");
+    const file = input.files && input.files[0];
+    input.value = ""; // let the same file be picked again later
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function () {
+      let data;
+      try {
+        data = store.parseDraftFile(String(reader.result));
+      } catch (e) {
+        alert(e.message);
+        return;
+      }
+      if (!isEmpty(collectData()) &&
+          !confirm("Loading this draft will replace what's currently on the form. Continue?")) {
+        return;
+      }
+      applyData(data);
+      $("#draft-banner").hidden = true;
+      autosaveOn = true;
+      scheduleSave();
+      flashStatus("Draft loaded");
+    };
+    reader.onerror = function () { alert("Couldn't read that file."); };
+    reader.readAsText(file);
+  }
+
+  /* ---------------- apply a saved list to the form ---------------- */
+  function applyData(data) {
+    $("#project-name").value = data.project || "";
+    $("#requester-email").value = data.requesterEmail || "";
+    $("#general-notes").value = data.notes || "";
+
+    $("#shots").innerHTML = "";
+    const shots = data.shots && data.shots.length ? data.shots : [null];
+    shots.forEach(function (s) { addShot(s || undefined); });
+
+    // Keep long lists scannable: everything but the last shot folds up
+    const cards = $$(".shot-card");
+    cards.slice(0, -1).forEach(collapseShot);
+    renumberShots();
+  }
+
+  function downloadBlob(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
 
   /* ---------------- pickers ---------------- */
   function tileGroup(options, groupName, opts) {
@@ -113,11 +294,13 @@
       (function next(i) {
         if (i >= files.length) {
           renderRefThumbs(card);
+          scheduleSave();
           return;
         }
         if (card._refImages.length >= MAX_REF_IMAGES) {
           alert("Up to " + MAX_REF_IMAGES + " reference images per shot.");
           renderRefThumbs(card);
+          scheduleSave();
           return;
         }
         const file = files[i];
@@ -179,6 +362,7 @@
       del.addEventListener("click", function () {
         card._refImages.splice(i, 1);
         renderRefThumbs(card);
+        scheduleSave();
       });
 
       thumb.append(pic, del);
@@ -216,6 +400,7 @@
       }
       card.remove();
       renumberShots();
+      scheduleSave();
     });
 
     $(".shot-duplicate", card).addEventListener("click", function () {
@@ -225,6 +410,7 @@
       }
       const copy = addShot(readShot(card));
       copy.scrollIntoView({ behavior: "smooth", block: "start" });
+      scheduleSave();
     });
 
     $(".shot-collapse", card).addEventListener("click", function () {
@@ -239,6 +425,7 @@
       collapseShot(card);
       const next = addShot();
       next.scrollIntoView({ behavior: "smooth", block: "start" });
+      scheduleSave();
     });
 
     $(".shot-summary", card).addEventListener("click", function () {
@@ -426,19 +613,12 @@
     const fileName =
       "Shot_List_" + slug(data.project) + "_" + now.toISOString().slice(0, 10) + ".xlsx";
 
-    const blob = new Blob([bytes], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () {
-      URL.revokeObjectURL(url);
-    }, 30000);
+    downloadBlob(
+      new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      fileName
+    );
 
     $("#success-file-name").textContent = fileName;
     $("#success-overlay").hidden = false;

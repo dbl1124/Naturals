@@ -83,6 +83,18 @@ body {
 
 .topbar__sub { margin: 2px 0 0; font-size: 0.8rem; color: #b9cde1; }
 
+.topbar__status { display: flex; align-items: center; gap: 10px; }
+
+.autosave-status {
+  font-size: 0.78rem;
+  color: #cfe0f2;
+  white-space: nowrap;
+}
+
+.autosave-status[hidden] { display: none; }
+
+.autosave-status--error { color: #ffc9bd; }
+
 .shot-count-badge {
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -98,6 +110,26 @@ body {
   margin: 0 auto;
   padding: 18px 20px 80px;
 }
+
+.draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: var(--sec-azure-bg);
+  border: 1px solid var(--sec-azure-line);
+  border-left: 4px solid var(--brand-600);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  color: var(--sec-azure-ink);
+}
+
+.draft-banner[hidden] { display: none; }
+
+.draft-banner__actions { display: flex; gap: 8px; flex: none; }
 
 .intro-strip {
   margin: 0 0 18px;
@@ -513,6 +545,14 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 }
 .btn--tiny:hover { border-color: var(--brand-500); color: var(--brand-700); }
 
+/* declared after .btn--tiny so the filled style wins on the banner */
+.btn--restore {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: #fff;
+}
+.btn--restore:hover { background: var(--brand-700); border-color: var(--brand-700); color: #fff; }
+
 .btn--danger:hover { border-color: var(--danger); color: var(--danger); }
 
 /* ---------------- action bar & errors ---------------- */
@@ -523,6 +563,8 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   gap: 14px;
   flex-wrap: wrap;
 }
+
+.actionbar__tools { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .actionbar .btn--primary { flex: 1; max-width: 420px; margin-left: auto; padding: 14px 22px; font-size: 1rem; }
 
