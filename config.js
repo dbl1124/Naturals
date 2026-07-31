@@ -60,20 +60,10 @@ const SHOTLIST_CONFIG = {
           hint: "Scene-driven image with people / environment",
           svg: '<svg viewBox="0 0 64 48"><rect x="9" y="7" width="46" height="34" rx="3"/><circle cx="22" cy="17" r="4"/><path d="M9 37l13-11 9 7 10-9 14 13"/></svg>',
         },
-      ],
-    },
-    {
-      label: "Group & Scale",
-      options: [
         {
           value: "Group / Family",
           hint: "Multiple products or full line shown together",
           svg: '<svg viewBox="0 0 64 48"><rect x="10" y="18" width="12" height="22" rx="1.5"/><rect x="26" y="10" width="12" height="30" rx="1.5"/><rect x="42" y="22" width="12" height="18" rx="1.5"/></svg>',
-        },
-        {
-          value: "Scale / Comparison",
-          hint: "Product next to a reference object for size",
-          svg: '<svg viewBox="0 0 64 48"><rect x="14" y="14" width="16" height="26" rx="1.5"/><line x1="44" y1="8" x2="44" y2="40"/><line x1="40" y1="12" x2="48" y2="12"/><line x1="41" y1="19" x2="47" y2="19"/><line x1="40" y1="26" x2="48" y2="26"/><line x1="41" y1="33" x2="47" y2="33"/></svg>',
         },
       ],
     },

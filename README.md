@@ -20,8 +20,8 @@ everything, including writing the Excel file in the browser.
   general notes.
 - **One card per shot**, kept short: every section sits in its own
   stroked, tinted box. **Shot type and Angle/view are side-by-side**
-  (azure / indigo; types grouped into Studio, Lifestyle & In-Use, Group &
-  Scale, Retail), then orientation / intended use / priority in a row
+  (azure / indigo; types grouped into Studio, Lifestyle & In-Use,
+  Retail), then orientation / intended use / priority in a row
   (teal / violet / steel), then free-text notes in a two-column grid.
   All tints are low-saturation siblings of the brand blue, defined as
   `--sec-*` variables at the top of `styles.css`.
