@@ -17,6 +17,7 @@
   /* section palette — background / stroke / accent ink */
   --sec-azure-bg: #e7f1fb;   --sec-azure-line: #bdd8f0;   --sec-azure-ink: #1d4a75;
   --sec-indigo-bg: #e9ecfb;  --sec-indigo-line: #c5cdee;  --sec-indigo-ink: #2f3d80;
+  --sec-indigo-deep: #2a2166; /* darker purple, for small text on the indigo tint */
   --sec-teal-bg: #e2f2f5;    --sec-teal-line: #b2d7de;    --sec-teal-ink: #14545f;
   --sec-violet-bg: #eeebfb;  --sec-violet-line: #cdc6ed;  --sec-violet-ink: #483d8c;
   --sec-steel-bg: #e8eef6;   --sec-steel-line: #c0cddd;   --sec-steel-ink: #2d4a72;
@@ -280,10 +281,10 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 
 .angle-nudge {
   margin: 10px 0 0;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   line-height: 1.35;
-  color: var(--sec-ink, var(--brand-700)); /* picks up the section's indigo */
+  color: var(--sec-indigo-deep);
 }
 .angle-nudge[hidden] { display: none; }
 
