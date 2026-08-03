@@ -278,7 +278,6 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 
 .picker legend em { color: var(--danger); font-style: normal; }
 
-.picker__hint { font-weight: 400; font-size: 0.8rem; color: var(--ink-soft); }
 
 /* -------- boxed sections: stroke + tinted background -------- */
 .sec-box {
@@ -314,16 +313,20 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 .sec-box--notes   { --sec-bg: var(--sec-plain-bg);  --sec-line: var(--sec-plain-line);  --sec-ink: var(--sec-plain-ink); }
 
 /* -------- "all uses apply" shortcut -------- */
+/* Rides on the legend line so the tiles in Orientation, Intended use,
+   and Priority all start at the same height. */
 .all-uses {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 9px;
-  font-size: 0.8rem;
+  gap: 6px;
+  margin-left: 10px;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--sec-ink, var(--ink));
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
+  vertical-align: baseline;
 }
 
 .all-uses input {
@@ -436,9 +439,12 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 .sec-box--priority .tile--mid .tile__art { color: var(--amber); }
 .sec-box--priority .tile--low .tile__art { color: var(--ink-soft); }
 
+/* 290px keeps the "Intended use / All uses apply" legend on one line —
+   it needs ~266px — so the tiles in all three boxes start level. Below
+   that the row drops to two columns rather than letting a legend wrap. */
 .picker-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   gap: 14px;
   margin-top: 16px;
 }
