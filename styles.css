@@ -313,6 +313,27 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 .sec-box--priority{ --sec-bg: var(--sec-steel-bg);  --sec-line: var(--sec-steel-line);  --sec-ink: var(--sec-steel-ink); }
 .sec-box--notes   { --sec-bg: var(--sec-plain-bg);  --sec-line: var(--sec-plain-line);  --sec-ink: var(--sec-plain-ink); }
 
+/* -------- "all uses apply" shortcut -------- */
+.all-uses {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 9px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sec-ink, var(--ink));
+  cursor: pointer;
+  user-select: none;
+}
+
+.all-uses input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--sec-ink, var(--brand-600));
+  cursor: pointer;
+}
+
 /* -------- side-by-side Shot type / Angle columns -------- */
 .split {
   display: grid;

@@ -358,6 +358,33 @@
     $(".sku-nudge", card).hidden = n < SKU_NUDGE_AT;
   }
 
+  /* ---------------- "all uses apply" shortcut ---------------- */
+  // The master box has no name attribute, so it never shows up in the
+  // `input[name$="-use"]` reads that build a shot's intended-use list.
+  function useBoxes(card) {
+    return $$('input[name$="-use"]', card);
+  }
+
+  function initAllUses(card) {
+    const master = $(".f-all-uses", card);
+
+    master.addEventListener("change", function () {
+      useBoxes(card).forEach(function (box) { box.checked = master.checked; });
+    });
+
+    // Keep the master honest when the tiles are clicked directly
+    card.addEventListener("change", function (e) {
+      const name = e.target.name;
+      if (!name || !/-use$/.test(name)) return;
+      syncAllUses(card);
+    });
+  }
+
+  function syncAllUses(card) {
+    const boxes = useBoxes(card);
+    $(".f-all-uses", card).checked = boxes.length > 0 && boxes.every(function (b) { return b.checked; });
+  }
+
   /* ---------------- reference image uploads ---------------- */
   function initRefUpload(card) {
     const fileInput = $(".f-ref-files", card);
@@ -468,6 +495,7 @@
     );
 
     initSkuField(card);
+    initAllUses(card);
     initRefUpload(card);
 
     $(".shot-remove", card).addEventListener("click", function () {
@@ -628,6 +656,7 @@
     (s.intendedUse || []).forEach(function (v) {
       check("use", v);
     });
+    syncAllUses(card);
   }
 
   /* ---------------- data ---------------- */

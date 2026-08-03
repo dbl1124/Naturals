@@ -27,6 +27,9 @@ everything, including writing the Excel file in the browser.
   `--sec-*` variables at the top of `styles.css`.
 - **Reference images**: each shot can carry up to 4 uploaded images (auto
   downscaled in the browser); they're embedded in the generated Excel file.
+- **"All uses apply"**: a checkbox above the intended-use tiles ticks all
+  four at once. It stays in sync both ways — untick one tile and it clears
+  itself; tick the last one by hand and it turns back on.
 - **One shot across many SKUs**: a quiet *"This shot applies to multiple
   SKUs"* link under the SKU field swaps it for a paste box — paste a
   column straight out of Excel. See below.
