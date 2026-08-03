@@ -95,7 +95,7 @@
   function isEmpty(data) {
     if (data.project || data.requesterEmail || data.notes) return false;
     return !data.shots.some(function (s) {
-      return s.skus.length || s.description || s.shotType || s.angle || s.props || s.features ||
+      return s.skus.length || s.description || s.shotType || s.angles.length || s.props || s.features ||
         s.referenceLink || s.retouching || s.orientation || s.priority ||
         (s.intendedUse || []).length || (s.refImages || []).length;
     });
@@ -326,7 +326,7 @@
       const single = $(".f-sku", card).value.trim();
       if (single && !list.value.trim()) list.value = single;
       setSkuMode(card, true);
-      updateSkuCount(card);
+      refreshCounts(card);
       list.focus();
       scheduleSave();
     });
@@ -340,11 +340,9 @@
       $(".f-sku", card).value = skus[0] || "";
       list.value = "";
       setSkuMode(card, false);
-      updateSkuCount(card);
+      refreshCounts(card);
       scheduleSave();
     });
-
-    list.addEventListener("input", function () { updateSkuCount(card); });
   }
 
   function updateSkuCount(card) {
@@ -357,6 +355,40 @@
     }
     $(".sku-count", card).textContent = text;
     $(".sku-nudge", card).hidden = n < SKU_NUDGE_AT;
+  }
+
+  /* ---------------- how many images a card asks for ---------------- */
+  // SKUs and angles multiply: 75 SKUs shot from 5 angles is 375 images,
+  // not 75. Saying so on the card is what keeps selections honest.
+  const ANGLE_NUDGE_AT = 5;
+  const BIG_YIELD = 20;
+
+  function cardCounts(card) {
+    const skus = isMultiSku(card)
+      ? parseSkus($(".f-sku-list", card).value).length
+      : $(".f-sku", card).value.trim() ? 1 : 0;
+    const angles = $$('input[name$="-angle"]:checked', card).length;
+    return { skus: skus, angles: angles, images: Math.max(1, skus) * Math.max(1, angles) };
+  }
+
+  function describeYield(c) {
+    const parts = [];
+    if (c.skus > 1) parts.push(c.skus + " SKUs");
+    if (c.angles > 1) parts.push(c.angles + " angles");
+    return (
+      "This card = " + c.images + (c.images === 1 ? " image" : " images") +
+      (parts.length ? " (" + parts.join(" × ") + ")" : "")
+    );
+  }
+
+  function refreshCounts(card) {
+    if (isMultiSku(card)) updateSkuCount(card);
+    const c = cardCounts(card);
+    const label = $(".shot-yield", card);
+    label.textContent = describeYield(c);
+    label.classList.toggle("shot-yield--big", c.images > BIG_YIELD);
+    $(".angle-nudge", card).hidden = c.angles < ANGLE_NUDGE_AT;
+    updateShotCount();
   }
 
   /* ---------------- "all uses apply" shortcut ---------------- */
@@ -484,7 +516,7 @@
 
     // Mount visual pickers with per-card group names
     $(".mount-shot-type", card).appendChild(groupedTiles(cfg.shotTypeGroups, "shot-" + id + "-type"));
-    $(".mount-angle", card).appendChild(tileGroup(cfg.angles, "shot-" + id + "-angle"));
+    $(".mount-angle", card).appendChild(tileGroup(cfg.angles, "shot-" + id + "-angle", { multi: true }));
     $(".mount-orientation", card).appendChild(
       tileGroup(cfg.orientations, "shot-" + id + "-orientation", { small: true })
     );
@@ -538,8 +570,13 @@
       expandShot(card);
     });
 
+    // Keep the per-card image count and the header badge live
+    card.addEventListener("input", function () { refreshCounts(card); });
+    card.addEventListener("change", function () { refreshCounts(card); });
+
     $("#shots").appendChild(card);
     if (prefill) writeShot(card, prefill);
+    refreshCounts(card);
     renumberShots();
     return card;
   }
@@ -554,10 +591,11 @@
     $(".shot-summary__title", card).textContent =
       s.description || skuLabel || "(no product yet)";
 
+    const angleLabel = s.angles.length > 1 ? s.angles.length + " angles" : s.angles[0] || "";
     const meta = [
       s.description && skuLabel ? skuLabel : "",
       s.shotType,
-      s.angle,
+      angleLabel,
       s.orientation,
       (s.intendedUse || []).join(", "),
       s.priority,
@@ -593,8 +631,11 @@
   }
 
   function updateShotCount() {
-    const n = $$(".shot-card").length;
-    $("#shot-count").textContent = n + (n === 1 ? " shot" : " shots");
+    const cards = $$(".shot-card");
+    const n = cards.length;
+    const images = cards.reduce(function (sum, card) { return sum + cardCounts(card).images; }, 0);
+    $("#shot-count").textContent =
+      n + (n === 1 ? " shot" : " shots") + (images > n ? " · " + images + " images" : "");
   }
 
   function readShot(card) {
@@ -614,7 +655,7 @@
       multiSku: multi,
       description: $(".f-description", card).value.trim(),
       shotType: picked("type"),
-      angle: picked("angle"),
+      angles: pickedAll("angle"),
       props: $(".f-props", card).value.trim(),
       features: $(".f-features", card).value.trim(),
       referenceLink: $(".f-reference", card).value.trim(),
@@ -637,7 +678,6 @@
       $(".f-sku", card).value = skus[0] || "";
       $(".f-sku-list", card).value = "";
     }
-    updateSkuCount(card);
     $(".f-description", card).value = s.description || "";
     $(".f-props", card).value = s.props || "";
     $(".f-features", card).value = s.features || "";
@@ -651,13 +691,17 @@
       if (el) el.checked = true;
     };
     check("type", s.shotType);
-    check("angle", s.angle);
+    (s.angles || []).forEach(function (v) {
+      check("angle", v);
+    });
     check("orientation", s.orientation);
     check("priority", s.priority);
     (s.intendedUse || []).forEach(function (v) {
       check("use", v);
     });
     syncAllUses(card);
+    updateSkuCount(card);
+    refreshCounts(card);
   }
 
   /* ---------------- data ---------------- */

@@ -276,6 +276,17 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 
 .picker legend em { color: var(--danger); font-style: normal; }
 
+.legend-hint { font-weight: 400; font-size: 0.78rem; color: var(--ink-soft); }
+
+.angle-nudge {
+  margin: 10px 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--amber);
+}
+.angle-nudge[hidden] { display: none; }
+
 
 /* -------- boxed sections: stroke + tinted background -------- */
 .sec-box {
@@ -505,9 +516,21 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 
 .shot-card__footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-top: 20px;
 }
+
+/* the honest cost of a card's selections, shown before they submit */
+.shot-yield {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.shot-yield--big { color: var(--amber); }
 
 /* -------- collapsed shot: thin at-a-glance bar -------- */
 .shot-card--collapsed {

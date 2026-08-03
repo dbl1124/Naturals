@@ -22,7 +22,9 @@
   const KEY = "current";
 
   const FILE_MARKER = "shotlist-draft";
-  const FILE_VERSION = 2; // v2 replaced a shot's single `sku` with a `skus` list
+  // v2 replaced a shot's single `sku` with a `skus` list;
+  // v3 did the same for `angle` -> `angles`
+  const FILE_VERSION = 3;
 
   /* ---------------- base64 <-> bytes ---------------- */
   function dataUrlToBytes(dataUrl) {
@@ -44,13 +46,21 @@
   }
 
   /* ---------------- shape conversion ---------------- */
-  // Drafts saved before multi-SKU support carry a single `sku` string.
+  // Older drafts carry a single `sku` and/or a single `angle` string.
   function migrate(data) {
     return Object.assign({}, data, {
       shots: (data.shots || []).map(function (s) {
-        if (s.skus) return s;
-        const one = (s.sku || "").trim();
-        return Object.assign({}, s, { skus: one ? [one] : [], multiSku: false });
+        const out = Object.assign({}, s);
+        if (!out.skus) {
+          const one = (out.sku || "").trim();
+          out.skus = one ? [one] : [];
+          out.multiSku = false;
+        }
+        if (!out.angles) {
+          const a = (out.angle || "").trim();
+          out.angles = a ? [a] : [];
+        }
+        return out;
       }),
     });
   }

@@ -315,17 +315,24 @@
     r5 += "</row>";
     rows.push(r5);
 
-    // Rows 6+ — one row per SKU. A shot covering 75 open-stock SKUs
-    // becomes rows 7.1 … 7.75 so the photographer gets a checklist,
-    // with the shared "7." prefix keeping the grouping visible.
+    // Rows 6+ — one row per finished image. SKUs and angles multiply,
+    // so a shot covering 75 SKUs from 3 angles becomes rows 7.1 … 7.225
+    // and the photographer gets a checklist. SKU-major order keeps each
+    // product's angles together, which is how a set actually runs.
     const centeredCols = new Set([1, 9, 11]); // Shot #, Orientation, Priority
     let rowIdx = 6;
     (data.shots || []).forEach(function (shot, i) {
       const imgCount = (shot.refImages || []).length;
-      const skus = shot.skus && shot.skus.length ? shot.skus : [""];
-      const multi = skus.length > 1;
+      const skuList = shot.skus && shot.skus.length ? shot.skus : [""];
+      const angleList = shot.angles && shot.angles.length ? shot.angles : [""];
+      const combos = [];
+      skuList.forEach(function (sku) {
+        angleList.forEach(function (angle) { combos.push([sku, angle]); });
+      });
+      const multi = combos.length > 1;
 
-      skus.forEach(function (sku, j) {
+      combos.forEach(function (combo, j) {
+        const sku = combo[0];
         // Only the first row of a group carries the attachment note
         const refText =
           (shot.referenceLink || "") +
@@ -338,7 +345,7 @@
           sku,
           shot.description,
           shot.shotType,
-          shot.angle,
+          combo[1],
           shot.props,
           shot.features,
           refText,

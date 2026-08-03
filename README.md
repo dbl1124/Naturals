@@ -38,6 +38,27 @@ everything, including writing the Excel file in the browser.
   stays scannable instead of becoming one huge scroll. Click any summary
   bar to expand and edit that shot again.
 
+## Angles, and the honest image count
+
+**Angle / view is multi-select.** One studio setup routinely yields front,
+3/4, side, and top-down of the same product, and forcing four cards for
+one setup was busywork.
+
+The guard against ticking everything isn't a rule, it's arithmetic made
+visible. **Every card shows what it's actually asking for** — "This card =
+375 images (75 SKUs × 5 angles)" — turning amber past 20, and the header
+badge totals the whole request ("3 shots · 380 images"). SKUs and angles
+multiply, so a requestor sees the real cost of a click before the
+photographer discovers it in the spreadsheet. Past 4 angles a soft nudge
+asks whether they're all needed (`ANGLE_NUDGE_AT` in `app.js`).
+
+The structural guard is that **props, features, and retouching notes are
+shared across every angle on a card**. Ticking three angles is a claim
+that all three share one styling direction; if they don't, there's
+nowhere to say so and the requestor has to split the card. That's what
+keeps genuinely different shots apart, rather than restricting which shot
+types may hold multiple angles.
+
 ## Open stock: one shot, many SKUs
 
 Requestors with 75 open-stock items that all need the same shot shouldn't
@@ -46,11 +67,14 @@ turns the SKU field into a paste box that accepts a column copied from
 Excel (newlines, commas, tabs, and semicolons all work). It trims blanks,
 drops repeats case-insensitively, and shows a running count.
 
-**In the spreadsheet, each SKU gets its own row** so the photographer has
-a checklist to work through on set. A shot numbered 7 covering 75 SKUs
-becomes rows `7.1` through `7.75`, every spec column identical, with the
-shared `7.` prefix keeping the grouping readable. Single-SKU shots keep a
-plain integer. Reference-image notes appear on the group's first row only.
+**In the spreadsheet, each finished image gets its own row** so the
+photographer has a checklist to work through on set. SKUs and angles
+multiply: a shot numbered 7 covering 75 SKUs from 3 angles becomes rows
+`7.1` through `7.225`, every spec column identical, with the shared `7.`
+prefix keeping the grouping readable. Rows run SKU-major — all of one
+product's angles together, which is how a set actually runs. Shots
+producing a single image keep a plain integer. Reference-image notes
+appear on the group's first row only.
 
 This is deliberately kept as a *secondary* path so single-SKU stays the
 default: it's a small text link rather than a button, it isn't mentioned
