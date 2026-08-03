@@ -6,8 +6,10 @@
    ============================================================ */
 
 const SHOTLIST_CONFIG = {
+  // The page heading is companyName + siteTitle, e.g. "ATG Photography
+  // Shot List Generator". companyName also titles the Excel file.
   companyName: "ATG",
-  siteTitle: "Photography Shot List",
+  siteTitle: "Photography Shot List Generator",
 
   // Maximum shots per request (soft guard against runaway forms)
   maxShots: 50,

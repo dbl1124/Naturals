@@ -79,9 +79,7 @@ body {
   flex: none;
 }
 
-.topbar h1 { margin: 0; font-size: 1.15rem; letter-spacing: 0.02em; }
-
-.topbar__sub { margin: 2px 0 0; font-size: 0.8rem; color: #b9cde1; }
+.topbar h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0.02em; }
 
 .topbar__status { display: flex; align-items: center; gap: 10px; }
 

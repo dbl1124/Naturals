@@ -25,8 +25,9 @@
 
   /* ---------------- boot ---------------- */
   document.addEventListener("DOMContentLoaded", function () {
-    $("#site-title").textContent = cfg.siteTitle;
-    $("#company-name").textContent = cfg.companyName;
+    const heading = [cfg.companyName, cfg.siteTitle].filter(Boolean).join(" ");
+    $("#site-title").textContent = heading;
+    document.title = heading;
 
     // Drafts from older versions of this form are no longer used
     try { localStorage.removeItem("shotlist-draft-v1"); } catch (e) { /* ignore */ }
