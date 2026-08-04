@@ -77,7 +77,7 @@ one setup was busywork.
 The guard against ticking everything isn't a rule, it's arithmetic made
 visible. **Every card shows what it's actually asking for** — "This card =
 375 images (75 SKUs × 5 angles)" — turning amber past 20, and the header
-badge totals the whole request ("Total images delivered: 380"). SKUs and angles
+badge totals the whole request ("Total images requested: 380"). SKUs and angles
 multiply, so a requestor sees the real cost of a click before the
 photographer discovers it in the spreadsheet. Past 4 angles a soft nudge
 asks whether they're all needed (`ANGLE_NUDGE_AT` in `app.js`).

@@ -657,7 +657,7 @@
     const images = $$(".shot-card").reduce(function (sum, card) {
       return sum + cardCounts(card).images;
     }, 0);
-    $("#shot-count").textContent = "Total images delivered: " + images;
+    $("#shot-count").textContent = "Total images requested: " + images;
   }
 
   function readShot(card) {
