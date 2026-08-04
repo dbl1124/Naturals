@@ -71,7 +71,7 @@
       $("#success-overlay").hidden = true;
     });
 
-    updateShotCount();
+    updateTotalImages();
   });
 
   /* ---------------- autosave ---------------- */
@@ -388,7 +388,7 @@
     label.textContent = describeYield(c);
     label.classList.toggle("shot-yield--big", c.images > BIG_YIELD);
     $(".angle-nudge", card).hidden = c.angles < ANGLE_NUDGE_AT;
-    updateShotCount();
+    updateTotalImages();
   }
 
   /* ---------------- "all uses apply" shortcut ---------------- */
@@ -627,15 +627,16 @@
       $(".shot-number", card).textContent = "Shot " + (i + 1);
       $(".shot-summary__num", card).textContent = "Shot " + (i + 1);
     });
-    updateShotCount();
+    updateTotalImages();
   }
 
-  function updateShotCount() {
-    const cards = $$(".shot-card");
-    const n = cards.length;
-    const images = cards.reduce(function (sum, card) { return sum + cardCounts(card).images; }, 0);
-    $("#shot-count").textContent =
-      n + (n === 1 ? " shot" : " shots") + (images > n ? " · " + images + " images" : "");
+  // The badge counts finished images, not cards: one card covering 25 SKUs
+  // is 25 images to shoot, and that is the number worth showing.
+  function updateTotalImages() {
+    const images = $$(".shot-card").reduce(function (sum, card) {
+      return sum + cardCounts(card).images;
+    }, 0);
+    $("#shot-count").textContent = "Total images delivered: " + images;
   }
 
   function readShot(card) {

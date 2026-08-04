@@ -64,7 +64,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px 16px;
+  flex-wrap: wrap; /* the badge drops below the title on phones */
 }
 
 .topbar__brand { display: flex; align-items: center; gap: 14px; }
@@ -160,7 +161,7 @@ body {
 /* ---------------- fields ---------------- */
 .field-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 12px 18px;
   margin-bottom: 4px;
 }
@@ -454,7 +455,9 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
    that the row drops to two columns rather than letting a legend wrap. */
 .picker-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  /* min() lets the track shrink below 290px on very narrow screens
+     instead of forcing the page to scroll sideways */
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
   gap: 14px;
   margin-top: 16px;
 }
@@ -502,6 +505,8 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
@@ -513,7 +518,7 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
   letter-spacing: 0.05em;
 }
 
-.shot-card__tools { display: flex; gap: 8px; }
+.shot-card__tools { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .shot-card__footer {
   display: flex;
@@ -718,6 +723,9 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 @media (max-width: 560px) {
   .card { padding: 16px 14px; }
   .topbar__inner { padding: 10px 14px; }
+  .topbar h1 { font-size: 1.02rem; }
+  .topbar__icon { width: 36px; height: 28px; }
+  .shot-count-badge { font-size: 0.78rem; padding: 4px 11px; }
   .tile-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
   .actionbar .btn--primary { max-width: none; width: 100%; }
   .shot-summary__title { max-width: none; }
