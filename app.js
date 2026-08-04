@@ -41,7 +41,7 @@
         return;
       }
       const card = addShot();
-      card.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollToElement(card);
       scheduleSave();
     });
 
@@ -547,7 +547,7 @@
         return;
       }
       const copy = addShot(readShot(card));
-      copy.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollToElement(copy);
       scheduleSave();
     });
 
@@ -561,8 +561,10 @@
         return;
       }
       collapseShot(card);
-      const next = addShot();
-      next.scrollIntoView({ behavior: "smooth", block: "start" });
+      addShot();
+      // Frame the just-collapsed bar at the top, new form directly below
+      scrollToElement(card);
+      flashCard(card);
       scheduleSave();
     });
 
@@ -579,6 +581,25 @@
     refreshCounts(card);
     renumberShots();
     return card;
+  }
+
+  /* ---------------- scrolling ---------------- */
+  // scrollIntoView puts an element at y=0, which hides it behind the
+  // sticky header. Offset by the header so the target is actually seen.
+  function scrollToElement(el, gap) {
+    const header = $(".topbar");
+    const offset = (header ? header.getBoundingClientRect().height : 0) + (gap == null ? 14 : gap);
+    const top = window.pageYOffset + el.getBoundingClientRect().top - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }
+
+  // A beat of highlight on the bar that just appeared, so it's obvious
+  // the finished shot was captured rather than lost.
+  function flashCard(card) {
+    card.classList.remove("shot-card--flash");
+    void card.offsetWidth; // restart the animation
+    card.classList.add("shot-card--flash");
+    setTimeout(function () { card.classList.remove("shot-card--flash"); }, 1400);
   }
 
   /* ---------------- collapse / expand ---------------- */

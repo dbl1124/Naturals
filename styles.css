@@ -564,6 +564,18 @@ div.invalid { border: 1px solid var(--danger); border-radius: var(--radius); pad
 
 .shot-summary[hidden] { display: none; }
 
+/* brief highlight on a bar that just folded up, as confirmation */
+@keyframes shot-collapsed-flash {
+  from { box-shadow: 0 0 0 3px rgba(42, 93, 140, 0.5); }
+  to   { box-shadow: 0 0 0 3px rgba(42, 93, 140, 0); }
+}
+
+.shot-card--flash { animation: shot-collapsed-flash 1.4s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-card--flash { animation: none; }
+}
+
 .shot-summary:hover { background: var(--brand-50); }
 
 .shot-summary__num {
