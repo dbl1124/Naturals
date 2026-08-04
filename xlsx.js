@@ -168,8 +168,7 @@
       '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
       '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
       (hasImages
-        ? '<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
-          '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'
+        ? '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'
         : "") +
       '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
       "</Types>"
@@ -182,30 +181,24 @@
     '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
     "</Relationships>";
 
-  function workbookXml(hasImages) {
-    return (
-      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-      "<sheets>" +
-      '<sheet name="Shot List" sheetId="1" r:id="rId1"/>' +
-      (hasImages ? '<sheet name="Reference Images" sheetId="2" r:id="rId3"/>' : "") +
-      "</sheets>" +
-      "</workbook>"
-    );
-  }
+  const WORKBOOK =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheets><sheet name="Shot List" sheetId="1" r:id="rId1"/></sheets>' +
+    "</workbook>";
 
-  function workbookRelsXml(hasImages) {
-    return (
-      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
-      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
-      (hasImages
-        ? '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'
-        : "") +
-      "</Relationships>"
-    );
-  }
+  const WORKBOOK_RELS =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+    "</Relationships>";
+
+  const SHEET1_RELS =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>' +
+    "</Relationships>";
 
   /* Style ids used by the sheet builder:
      0 default | 1 title | 2 subtitle | 3 note | 4 section band
@@ -262,9 +255,28 @@
     "Intended Use",
     "Priority",
     "Retouching / Notes",
+    "Reference Images",
   ];
 
-  const COL_WIDTHS = [8, 16, 30, 22, 22, 32, 30, 28, 14, 24, 15, 32];
+  /* ---- inline reference thumbnails ----
+     Excel has no true in-cell picture: images are floating shapes
+     anchored to a cell. They sit in the last column so the wide
+     column never pushes the spec columns off screen, and only on a
+     shot group's first row so a 225-row group isn't 225 copies. */
+  const EMU_PER_PX = 9525;
+  const THUMB_W = 108;     // display box per thumbnail, px
+  const THUMB_H = 112;
+  const THUMB_GAP = 6;
+  const THUMB_PAD = 4;
+  const MAX_INLINE = 4;    // matches the form's per-shot upload cap
+  const IMAGE_COL = HEADERS.length;            // 1-based: last column
+  const IMAGE_ROW_PT = Math.round((THUMB_H + THUMB_PAD * 2) * 0.75); // px -> points
+
+  // wide enough for MAX_INLINE thumbs; Excel widths are ~7px per unit
+  const IMAGE_COL_WIDTH =
+    Math.ceil((THUMB_PAD * 2 + MAX_INLINE * THUMB_W + (MAX_INLINE - 1) * THUMB_GAP - 5) / 7);
+
+  const COL_WIDTHS = [8, 16, 30, 22, 22, 32, 30, 28, 14, 24, 15, 32, IMAGE_COL_WIDTH];
 
   function buildSheetXml(data) {
     const lastCol = colLetter(HEADERS.length); // M
@@ -298,6 +310,7 @@
       ["F", "H", "SHOT DETAILS"],
       ["I", "J", "DELIVERABLE"],
       ["K", "L", "PRIORITY & POST"],
+      ["M", "M", "REFERENCE"],
     ];
     let r4 = '<row r="4" ht="18" customHeight="1">';
     for (const [c1, c2, label] of sections) {
@@ -320,6 +333,7 @@
     // and the photographer gets a checklist. SKU-major order keeps each
     // product's angles together, which is how a set actually runs.
     const centeredCols = new Set([1, 9, 11]); // Shot #, Orientation, Priority
+    const placements = []; // { row, images } for the drawing part
     let rowIdx = 6;
     (data.shots || []).forEach(function (shot, i) {
       const imgCount = (shot.refImages || []).length;
@@ -333,13 +347,11 @@
 
       combos.forEach(function (combo, j) {
         const sku = combo[0];
-        // Only the first row of a group carries the attachment note
-        const refText =
-          (shot.referenceLink || "") +
-          (imgCount && j === 0
-            ? (shot.referenceLink ? "  —  " : "") +
-              imgCount + " image" + (imgCount > 1 ? "s" : "") + " attached (see “Reference Images” tab)"
-            : "");
+        // Thumbnails ride the group's first row only
+        const carriesImages = j === 0 && imgCount > 0;
+        if (carriesImages) {
+          placements.push({ row: rowIdx, images: shot.refImages.slice(0, MAX_INLINE) });
+        }
         const values = [
           multi ? i + 1 + "." + (j + 1) : i + 1,
           sku,
@@ -348,13 +360,17 @@
           combo[1],
           shot.props,
           shot.features,
-          refText,
+          shot.referenceLink,
           shot.orientation,
           Array.isArray(shot.intendedUse) ? shot.intendedUse.join(", ") : shot.intendedUse,
           shot.priority,
           shot.retouching,
+          "", // the pictures float over this cell
         ];
-        let row = '<row r="' + rowIdx + '">';
+        let row =
+          '<row r="' + rowIdx + '"' +
+          (carriesImages ? ' ht="' + IMAGE_ROW_PT + '" customHeight="1"' : "") +
+          ">";
         values.forEach(function (v, c) {
           const ref = colLetter(c + 1) + rowIdx;
           const style = centeredCols.has(c + 1) ? 7 : 6;
@@ -395,9 +411,9 @@
       mergeXml += "</mergeCells>";
     }
 
-    return (
+    const xml =
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
       '<sheetViews><sheetView workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
       '<sheetFormatPr defaultRowHeight="15"/>' +
       cols +
@@ -405,112 +421,96 @@
       rows.join("") +
       "</sheetData>" +
       mergeXml +
-      "</worksheet>"
-    );
-  }
-
-  /* ---------------- Reference Images sheet -------------------- */
-  const EMU_PER_PX = 9525;
-  const ROW_PX = 20; // default row height at 15pt
-  const IMG_MAX_W = 380; // display width in the sheet, px
-
-  // Lays out every uploaded reference image on its own worksheet:
-  // a bold label row per image, the picture anchored just below it.
-  function buildImagesParts(images) {
-    const sheetRows = [];
-    const anchors = [];
-
-    sheetRows.push('<row r="1" ht="32" customHeight="1">' + strCell("A1", 1, "REFERENCE IMAGES") + "</row>");
-    let rowIdx = 3;
-
-    images.forEach(function (img, i) {
-      const label = "Shot " + img.shotNo + (img.name ? " — " + img.name : "");
-      sheetRows.push('<row r="' + rowIdx + '">' + strCell("B" + rowIdx, 8, label) + "</row>");
-
-      const scale = Math.min(1, IMG_MAX_W / (img.w || IMG_MAX_W));
-      const dispW = Math.max(1, Math.round((img.w || IMG_MAX_W) * scale));
-      const dispH = Math.max(1, Math.round((img.h || IMG_MAX_W) * scale));
-
-      anchors.push(
-        "<xdr:oneCellAnchor>" +
-          "<xdr:from><xdr:col>1</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>" + rowIdx + "</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>" +
-          '<xdr:ext cx="' + dispW * EMU_PER_PX + '" cy="' + dispH * EMU_PER_PX + '"/>' +
-          "<xdr:pic>" +
-          '<xdr:nvPicPr><xdr:cNvPr id="' + (i + 2) + '" name="' + esc(label) + '"/><xdr:cNvPicPr/></xdr:nvPicPr>' +
-          '<xdr:blipFill><a:blip r:embed="rId' + (i + 1) + '"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>' +
-          '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + dispW * EMU_PER_PX + '" cy="' + dispH * EMU_PER_PX + '"/></a:xfrm>' +
-          '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>' +
-          "</xdr:pic>" +
-          "<xdr:clientData/>" +
-          "</xdr:oneCellAnchor>"
-      );
-
-      rowIdx += Math.ceil(dispH / ROW_PX) + 3; // room for the picture + a gap
-    });
-
-    const sheetXml =
-      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-      '<sheetFormatPr defaultRowHeight="15"/>' +
-      '<cols><col min="1" max="1" width="3" customWidth="1"/><col min="2" max="2" width="60" customWidth="1"/></cols>' +
-      "<sheetData>" + sheetRows.join("") + "</sheetData>" +
-      '<mergeCells count="1"><mergeCell ref="A1:F1"/></mergeCells>' +
-      '<drawing r:id="rId1"/>' +
+      (placements.length ? '<drawing r:id="rId1"/>' : "") +
       "</worksheet>";
 
-    const drawingXml =
+    return { xml: xml, placements: placements };
+  }
+
+  /* ---------------- drawing part (the inline thumbnails) ------- */
+  function buildDrawing(placements) {
+    const anchors = [];
+    const media = [];
+
+    placements.forEach(function (p) {
+      p.images.forEach(function (img, i) {
+        const id = media.length + 1;
+        media.push(img);
+
+        const natW = img.w || THUMB_W;
+        const natH = img.h || THUMB_H;
+        const scale = Math.min(THUMB_W / natW, THUMB_H / natH, 1);
+        const w = Math.max(1, Math.round(natW * scale));
+        const h = Math.max(1, Math.round(natH * scale));
+
+        // centre each thumb in its slot so mixed shapes stay tidy
+        const slotX = THUMB_PAD + i * (THUMB_W + THUMB_GAP);
+        const offX = slotX + Math.round((THUMB_W - w) / 2);
+        const offY = THUMB_PAD + Math.round((THUMB_H - h) / 2);
+        const cx = w * EMU_PER_PX;
+        const cy = h * EMU_PER_PX;
+
+        anchors.push(
+          "<xdr:oneCellAnchor>" +
+            "<xdr:from>" +
+              "<xdr:col>" + (IMAGE_COL - 1) + "</xdr:col>" +
+              "<xdr:colOff>" + offX * EMU_PER_PX + "</xdr:colOff>" +
+              "<xdr:row>" + (p.row - 1) + "</xdr:row>" +
+              "<xdr:rowOff>" + offY * EMU_PER_PX + "</xdr:rowOff>" +
+            "</xdr:from>" +
+            '<xdr:ext cx="' + cx + '" cy="' + cy + '"/>' +
+            "<xdr:pic>" +
+              '<xdr:nvPicPr><xdr:cNvPr id="' + (id + 1) + '" name="' + esc(img.name || "reference") + '"/><xdr:cNvPicPr/></xdr:nvPicPr>' +
+              '<xdr:blipFill><a:blip r:embed="rId' + id + '"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>' +
+              '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>' +
+              '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>' +
+            "</xdr:pic>" +
+            "<xdr:clientData/>" +
+          "</xdr:oneCellAnchor>"
+        );
+      });
+    });
+
+    const xml =
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
       anchors.join("") +
       "</xdr:wsDr>";
 
-    let drawingRels =
+    let rels =
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
-    images.forEach(function (_, i) {
-      drawingRels +=
+    media.forEach(function (_, i) {
+      rels +=
         '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image' + (i + 1) + '.jpeg"/>';
     });
-    drawingRels += "</Relationships>";
+    rels += "</Relationships>";
 
-    const sheetRels =
-      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>' +
-      "</Relationships>";
-
-    return { sheetXml: sheetXml, drawingXml: drawingXml, drawingRels: drawingRels, sheetRels: sheetRels };
+    return { xml: xml, rels: rels, media: media };
   }
 
   /* ---------------- Public API -------------------------------- */
   function buildShotListXlsx(data) {
-    // Gather uploaded reference images across all shots
-    const images = [];
-    (data.shots || []).forEach(function (shot, i) {
-      (shot.refImages || []).forEach(function (img) {
-        images.push({ shotNo: i + 1, name: img.name, dataUrl: img.dataUrl, w: img.w, h: img.h });
-      });
-    });
-    const hasImages = images.length > 0;
+    const sheet = buildSheetXml(data);
+    const hasImages = sheet.placements.length > 0;
+    const drawing = hasImages ? buildDrawing(sheet.placements) : null;
 
     const entries = [
       { name: "[Content_Types].xml", data: encodeUtf8(contentTypesXml(hasImages)) },
       { name: "_rels/.rels", data: encodeUtf8(ROOT_RELS) },
-      { name: "xl/workbook.xml", data: encodeUtf8(workbookXml(hasImages)) },
-      { name: "xl/_rels/workbook.xml.rels", data: encodeUtf8(workbookRelsXml(hasImages)) },
+      { name: "xl/workbook.xml", data: encodeUtf8(WORKBOOK) },
+      { name: "xl/_rels/workbook.xml.rels", data: encodeUtf8(WORKBOOK_RELS) },
       { name: "xl/styles.xml", data: encodeUtf8(STYLES) },
-      { name: "xl/worksheets/sheet1.xml", data: encodeUtf8(buildSheetXml(data)) },
+      { name: "xl/worksheets/sheet1.xml", data: encodeUtf8(sheet.xml) },
     ];
 
     if (hasImages) {
-      const parts = buildImagesParts(images);
       entries.push(
-        { name: "xl/worksheets/sheet2.xml", data: encodeUtf8(parts.sheetXml) },
-        { name: "xl/worksheets/_rels/sheet2.xml.rels", data: encodeUtf8(parts.sheetRels) },
-        { name: "xl/drawings/drawing1.xml", data: encodeUtf8(parts.drawingXml) },
-        { name: "xl/drawings/_rels/drawing1.xml.rels", data: encodeUtf8(parts.drawingRels) }
+        { name: "xl/worksheets/_rels/sheet1.xml.rels", data: encodeUtf8(SHEET1_RELS) },
+        { name: "xl/drawings/drawing1.xml", data: encodeUtf8(drawing.xml) },
+        { name: "xl/drawings/_rels/drawing1.xml.rels", data: encodeUtf8(drawing.rels) }
       );
-      images.forEach(function (img, i) {
+      drawing.media.forEach(function (img, i) {
         entries.push({ name: "xl/media/image" + (i + 1) + ".jpeg", data: dataUrlToBytes(img.dataUrl) });
       });
     }

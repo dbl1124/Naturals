@@ -5,8 +5,8 @@ A brand member fills out a fast online form — with **picture thumbnails** for
 shot type, angle/view, orientation, intended use, and priority — then clicks
 **Download Shot List** and gets a real Excel file (`.xlsx`) laid out like the
 original workbook: title bar, project line, section bands, one row per shot.
-Uploaded reference images are **embedded inside that same file** on a
-"Reference Images" tab, so one attachment carries everything.
+Uploaded reference images are **embedded inside that same file**, inline
+beside their shot, so one attachment carries everything.
 
 Sending is left to the requestor — download the file, then email it to the
 photographer however they normally would.
@@ -26,7 +26,8 @@ everything, including writing the Excel file in the browser.
   All tints are low-saturation siblings of the brand blue, defined as
   `--sec-*` variables at the top of `styles.css`.
 - **Reference images**: each shot can carry up to 4 uploaded images (auto
-  downscaled in the browser); they're embedded in the generated Excel file.
+  downscaled in the browser); they're embedded in the generated Excel file
+  next to the shot. See *Inline reference thumbnails* below.
 - **"All uses apply"**: a checkbox above the intended-use tiles ticks all
   four at once. It stays in sync both ways — untick one tile and it clears
   itself; tick the last one by hand and it turns back on.
@@ -37,6 +38,35 @@ everything, including writing the Excel file in the browser.
   folds the shot into a thin at-a-glance summary bar — so a 20-shot list
   stays scannable instead of becoming one huge scroll. Click any summary
   bar to expand and edit that shot again.
+
+## Inline reference thumbnails
+
+Reference images sit **in the sheet next to their shot**, not on a separate
+tab, so nobody has to cross-reference "shot 7" against another sheet while
+standing at a light stand.
+
+Three constraints shaped how:
+
+- **Excel has no true in-cell picture.** Images are floating shapes anchored
+  to a cell, so they're placed in the **last column** — a wide column there
+  never pushes the spec columns off screen, and the photographer scrolls
+  right only when they want the reference.
+- **Thumbnails land on a shot group's first row only.** A shot covering 75
+  SKUs × 3 angles is 225 rows sharing one reference; repeating the picture
+  225 times would be unreadable. It appears once, on row `7.1`.
+- **Only those rows get taller** (about 120px). Every other row keeps its
+  normal height.
+
+Up to 4 thumbnails sit side by side in that cell, each scaled to fit a
+108×112 box with aspect ratio preserved. The embedded file is still the full
+downscaled original, so clicking a thumbnail and enlarging it in Excel shows
+real detail. Sizes are the `THUMB_*` constants at the top of `xlsx.js`.
+
+**Two known limits**, inherent to anchored images rather than to this code:
+sorting or filtering the sheet can leave floating pictures misaligned with
+their rows, and opening the file in Google Sheets rather than Excel
+occasionally floats them loose. Both are the cost of inline placement; a
+separate tab avoided them but made the file worse to work from.
 
 ## Angles, and the honest image count
 
